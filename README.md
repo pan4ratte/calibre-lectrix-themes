@@ -4,10 +4,10 @@ Lectrix's light and dark themes for calibre. Lectrix's colors come from Neo's li
 
 The themes come as two plugins:
 
-- **Lectrix themes**: sets calibre's light and dark colors to Lectrix's, and styles what the colors alone can't reach in the main window and its dialogs. That means the title bar, fields, buttons, menus, tooltips, the toolbar's edge, the Tag browser's hover and the book list's current cell.
+- **Lectrix themes**: sets calibre's light and dark colors to Lectrix's, and styles what the colors alone can't reach in the main window and its dialogs. That means the title bar, fields, buttons, menus, tooltips, scrollbars, the toolbar's edge, the side panels' edges, the book list's column headers, the Tag browser's hover and the book list's current cell.
 - **Lectrix themes for Edit book**: the same styling for the book editor, plus "Lectrix light" and "Lectrix dark" syntax themes.
 
-Needs calibre 7 or newer. The title bar colors need Windows 11.
+Needs calibre 7 or newer. The title bar colors and the round corners of menus and dropdown lists need Windows 11.
 
 ## Install
 
@@ -53,13 +53,17 @@ To go back to calibre's own icons, delete `resources/images` and restart.
 | --- | --- |
 | Colors | Window, lists, text, selection, links and tooltips, set in calibre's palette |
 | Title bar | Matches the toolbar, with Lectrix's title color and a thin window edge. Covers the main window and every dialog. |
-| Fields and dropdowns | Thin edge, stronger under the pointer and in the accent when focused, with Lectrix arrows |
+| Fields | Thin edge, stronger under the pointer and in the accent when focused |
+| Dropdowns | As in Lectrix: one you can't type in looks like a button, and an open one has a 2 px accent edge. The list opens below, styled as a menu with round corners, with a faint tint under the pointer. |
 | Buttons | Flat, with the same edge. A dialog's default button (usually OK) takes the accent. |
-| Menus and tooltips | Lectrix's menu color with a thin edge, separators in the line color, and a faint hover rather than the selection color |
+| Menus and tooltips | Lectrix's menu color with a thin edge and round corners on menus, separators in the line color, and a faint hover rather than the selection color |
 | Toolbar and tabs | The toolbar's lower edge and the selected tab's outline in Lectrix's line color |
+| Side panels | The Tag browser and Book details end in a thin line where they meet the book list, as Lectrix's side panes do, in the accent under the pointer. Calibre's own handles are bars with dots. |
+| Scrollbars | Thin, as in Lectrix: no track, a rounded thumb in the text color that gets stronger under the pointer, and a small arrow at each end |
+| Column headers | The book list's and other lists' headers: muted text over a thin line, faint lines between columns, and Lectrix arrows for the sort order |
 | Tag browser | A faint hover. Calibre's own hover in dark mode is brighter than the selection, with black text. |
 | Book list's current cell | Looks like the rest of the selected row. Calibre's own style draws it lighter, with black text in dark mode. |
-| Book editor | Title bar, fields, buttons and menus as above, plus the Lectrix syntax themes |
+| Book editor | Title bar, fields, buttons, menus, scrollbars and column headers as above, plus the Lectrix syntax themes |
 | E-book viewer | Its default "System" color scheme already uses the palette for pages, text and links |
 
 The editor plugin selects the Lectrix syntax theme on its first start, and swaps between the light and dark one as calibre's mode changes. If you pick another theme in the editor's Preferences → Editor settings, that one stays. The plugin rewrites the two Lectrix themes at each start, so changes to them are lost. To make your own version, create a new theme based on one of them under another name.

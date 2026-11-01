@@ -4,15 +4,15 @@
 
 import sys
 
-from qt.core import QAbstractItemView, QApplication, QColor, QObject, Qt
+from qt.core import QAbstractItemView, QApplication, QColor, QEvent, QMenu, QObject, QPainter, QRect, Qt
 
 from .lectrix_theme import (
-    ARROWS,
     MODES,
-    arrow_colors,
-    arrow_svg,
+    arrow_images,
     colorref,
     hover_text,
+    pane_edge,
+    popup_edge,
     stylesheet,
     title_bar,
     tree_hover_stylesheet,
@@ -83,20 +83,17 @@ def write_arrows(mode):
     folder = os.path.join(cache_dir(), 'lectrix-themes')
     os.makedirs(folder, exist_ok=True)
     paths = {}
-    for name, path in ARROWS.items():
-        for suffix, color in arrow_colors(mode).items():
-            key = name + suffix
-            dest = os.path.join(folder, f'{mode}-{key}.svg')
-            svg = arrow_svg(path, color)
-            try:
-                with open(dest, encoding='utf-8') as f:
-                    current = f.read()
-            except OSError:
-                current = None
-            if current != svg:
-                with open(dest, 'w', encoding='utf-8') as f:
-                    f.write(svg)
-            paths[key] = dest.replace(os.sep, '/')
+    for key, svg in arrow_images(mode).items():
+        dest = os.path.join(folder, f'{mode}-{key}.svg')
+        try:
+            with open(dest, encoding='utf-8') as f:
+                current = f.read()
+        except OSError:
+            current = None
+        if current != svg:
+            with open(dest, 'w', encoding='utf-8') as f:
+                f.write(svg)
+        paths[key] = dest.replace(os.sep, '/')
     return stylesheet(mode, paths.__getitem__)
 
 
@@ -106,6 +103,9 @@ DWMWA_BORDER_COLOR = 34
 DWMWA_CAPTION_COLOR = 35
 DWMWA_TEXT_COLOR = 36
 DWMWA_COLOR_DEFAULT = 0xFFFFFFFF
+DWMWA_WINDOW_CORNER_PREFERENCE = 33
+DWMWCP_DEFAULT = 0
+DWMWCP_ROUND = 2  # 8 px, as Lectrix's menus
 
 
 def _set_dwm(hwnd, attribute, value):
@@ -130,6 +130,23 @@ def style_title_bar(hwnd, mode, system_dark=False):
     _set_dwm(hwnd, DWMWA_BORDER_COLOR, colorref(colors['border']))
 
 
+def style_popup(hwnd, mode):
+    'Round a menu or dropdown list, with an edge of its color, or give it back to Windows.'
+    if mode is None:
+        _set_dwm(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DEFAULT)
+        _set_dwm(hwnd, DWMWA_BORDER_COLOR, DWMWA_COLOR_DEFAULT)
+        return
+    _set_dwm(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUND)
+    _set_dwm(hwnd, DWMWA_BORDER_COLOR, colorref(popup_edge(mode)['border']))
+
+
+def is_rounded_popup(widget):
+    "A menu or a dropdown's list: the popups Lectrix draws with round corners."
+    if not widget.isWindow() or widget.windowType() != Qt.WindowType.Popup:
+        return False
+    return isinstance(widget, QMenu) or widget.metaObject().className() == 'QComboBoxPrivateContainer'
+
+
 class Chrome(QObject):
     def __init__(self, app):
         super().__init__(app)
@@ -140,6 +157,16 @@ class Chrome(QObject):
         app.palette_changed.connect(self.refresh)
         app.focusWindowChanged.connect(self.on_focus_window)
         app.focusChanged.connect(self.on_focus_widget)
+        if sys.platform == 'win32':
+            app.installEventFilter(self)  # popups are rounded as they show
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.Show and obj.isWidgetType() and is_rounded_popup(obj):
+            try:
+                style_popup(int(obj.winId()), self.mode)
+            except Exception:
+                pass
+        return False
 
     @property
     def mode(self):
@@ -236,6 +263,65 @@ def patch_tree_hover(chrome):
     return True
 
 
+def edge_side(handle):
+    "The side of a panel's handle that faces the book list: 'left', 'right', 'top' or 'bottom'."
+    book_list = getattr(handle.parent(), 'book_list', None)
+    if book_list is None:
+        return None
+    h, b = handle.geometry(), book_list.geometry()
+    if handle.orientation is Qt.Orientation.Vertical:  # a handle between columns
+        if b.left() > h.right():
+            return 'right'
+        return 'left' if b.right() < h.left() else None
+    if b.top() > h.bottom():
+        return 'bottom'
+    return 'top' if b.bottom() < h.top() else None
+
+
+def edge_rect(rect, side, width):
+    if side == 'left':
+        return QRect(rect.left(), rect.top(), width, rect.height())
+    if side == 'right':
+        return QRect(rect.right() - width + 1, rect.top(), width, rect.height())
+    if side == 'top':
+        return QRect(rect.left(), rect.top(), rect.width(), width)
+    return QRect(rect.left(), rect.bottom() - width + 1, rect.width(), width)
+
+
+def patch_panel_edges(chrome):
+    # The handles between the main window's panels and the book list are drawn by calibre's
+    # style as a bar with dots. Lectrix's side panes end in a thin line instead, which takes
+    # the accent while the pointer is on it.
+    central = sys.modules.get('calibre.gui2.central')
+    handle_class = getattr(central, 'SplitterHandle', None)
+    if handle_class is None:
+        return
+    original = handle_class.paintEvent
+    if getattr(original, 'lectrix_themes', False):
+        return
+
+    def paintEvent(self, event):
+        mode = chrome.mode
+        collapsed = min(self.width(), self.height()) <= getattr(self, 'COLLAPSED_SIZE', 2)
+        side = None if mode is None or collapsed else edge_side(self)
+        if side is None:
+            return original(self, event)
+        if not self.testAttribute(Qt.WidgetAttribute.WA_Hover):
+            self.setAttribute(Qt.WidgetAttribute.WA_Hover)  # repaint as the pointer comes and goes
+        colors = pane_edge(mode)
+        p = QPainter(self)
+        r = self.rect()
+        p.fillRect(r, QColor(colors['pane']))
+        if self.underMouse() or self.drag_start is not None:
+            p.fillRect(edge_rect(r, side, 2), QColor(colors['hover']))
+        else:
+            p.fillRect(edge_rect(r, side, 1), QColor(colors['line']))
+        p.end()
+
+    paintEvent.lectrix_themes = True
+    handle_class.paintEvent = paintEvent
+
+
 def install():
     app = QApplication.instance()
     if app is None or not hasattr(app, 'palette_changed'):
@@ -245,6 +331,7 @@ def install():
         return existing
     chrome = Chrome(app)
     app.lectrix_themes_chrome = chrome
+    patch_panel_edges(chrome)
     if patch_tree_hover(chrome):
         # Views that use the hover style restyle themselves on this signal.
         app.palette_changed.emit()

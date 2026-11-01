@@ -135,35 +135,71 @@ def colorref(hex_color):
     return r | (g << 8) | (b << 16)
 
 
+def popup_edge(mode):
+    "The edge of menus and dropdown lists, which Windows 11 rounds as Lectrix's menus are."
+    return {'border': TOKENS[mode]['line_strong']}
+
+
 def title_bar(mode):
     'The Windows title bar, for every calibre window.'
     T = TOKENS[mode]
     return {'caption': T['chrome'], 'text': T['fg_strong'], 'border': T['line']}
 
 
-# Arrows for dropdowns and number fields: Qt stylesheets need image files, which
-# chrome.py writes to calibre's cache folder.
+def pane_edge(mode):
+    '''The edge between a side panel and the book list, as Lectrix's side panes have: the
+    panel's color up to a thin line, and the accent line of its resizer under the pointer.'''
+    T = TOKENS[mode]
+    return {'pane': T['chrome'], 'line': T['line'], 'hover': T['accent']}
+
+
+# Scrollbars are WebView2's thin ones, as Lectrix shows them: no track, a thumb in the text
+# color at 35% (70% under the pointer), and a small triangle at each end.
+SCROLL_THUMB_ALPHA = 0.35
+SCROLL_THUMB_HOVER_ALPHA = 0.7
+
+
+def rgba(hex_color, alpha):
+    r, g, b = (int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
+    return f'rgba({r}, {g}, {b}, {alpha})'
+
+
+# Arrows for dropdowns, number fields, sorted columns and scrollbars: Qt stylesheets need
+# image files, which chrome.py writes to calibre's cache folder.
 ARROWS = {
     'down': 'M3 6l5 5 5-5',
     'up': 'M3 10l5-5 5 5',
 }
+SCROLL_ARROWS = {
+    'scroll-up': 'M0 5.25L3 0.75L6 5.25Z',
+    'scroll-down': 'M0 0.75L3 5.25L6 0.75Z',
+    'scroll-left': 'M5.25 0L0.75 3L5.25 6Z',
+    'scroll-right': 'M0.75 0L5.25 3L0.75 6Z',
+}
 
 
-def arrow_colors(mode):
-    return {'': TOKENS[mode]['fg_muted'], '-disabled': BLENDS[mode]['disabled']}
-
-
-def arrow_svg(path, color):
-    return (
-        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">'
-        f'<path d="{path}" fill="none" stroke="{color}" stroke-width="1.6" '
-        'stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    )
+def arrow_images(mode):
+    "Every arrow image of a mode, as {name: svg}, for names such as 'down' and 'up-disabled'."
+    T, B = TOKENS[mode], BLENDS[mode]
+    ans = {}
+    for name, path in ARROWS.items():
+        for suffix, color in (('', T['fg_muted']), ('-disabled', B['disabled'])):
+            ans[name + suffix] = (
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">'
+                f'<path d="{path}" fill="none" stroke="{color}" stroke-width="1.6" '
+                'stroke-linecap="round" stroke-linejoin="round"/></svg>'
+            )
+    for name, path in SCROLL_ARROWS.items():
+        ans[name] = (
+            '<svg xmlns="http://www.w3.org/2000/svg" width="6" height="6" viewBox="0 0 6 6">'
+            f'<path d="{path}" fill="{T["fg"]}" fill-opacity="{SCROLL_THUMB_ALPHA}"/></svg>'
+        )
+    return ans
 
 
 def stylesheet(mode, arrow):
-    '''Added to calibre's own stylesheet. arrow(name) gives an arrow's image path, for names
-    such as "down" and "up-disabled".'''
+    '''Added to calibre's own stylesheet. arrow(name) gives an arrow's image path, for the
+    names arrow_images() gives.'''
     T, B = TOKENS[mode], BLENDS[mode]
     return f'''
 /* Fields: the surface with a thin edge, a step stronger under the pointer, the accent when
@@ -194,8 +230,32 @@ QComboBox QLineEdit, QAbstractSpinBox QLineEdit {{
     border-radius: 0;
     padding: 0;
 }}
-/* Editing a cell in a list: no room for padding or round corners. */
-QAbstractItemView QLineEdit, QAbstractItemView QAbstractSpinBox, QAbstractItemView QComboBox {{
+/* Dropdowns, as Lectrix's: one you can't type in is a button showing the choice, a step
+   lighter under the pointer. Open, a dropdown has a 2 px accent edge, and so does one you
+   type in while it has the focus, as Lectrix's fields do. The padding gives back the pixel
+   the edge takes. The list opens below, rather than over the dropdown with the choice on
+   top. */
+QComboBox {{
+    padding: 3px 6px 3px 8px;
+    combobox-popup: 0;
+}}
+QComboBox:!editable {{
+    background-color: {T['button']};
+}}
+QComboBox:!editable:hover {{
+    background-color: {T['button_hover']};
+}}
+QComboBox:!editable:disabled {{
+    background-color: {B['button_disabled']};
+}}
+QComboBox:on, QComboBox:editable:focus {{
+    border: 2px solid {T['accent']};
+    padding: 2px 5px 2px 7px;
+}}
+/* Editing a cell in a list: no room for padding, round corners or a wider edge. */
+QAbstractItemView QLineEdit, QAbstractItemView QAbstractSpinBox, QAbstractItemView QComboBox,
+QAbstractItemView QComboBox:on, QAbstractItemView QComboBox:editable:focus {{
+    border-width: 1px;
     border-radius: 0;
     padding: 0 2px;
 }}
@@ -213,13 +273,29 @@ QComboBox::down-arrow {{
 QComboBox::down-arrow:disabled {{
     image: url({arrow('down-disabled')});
 }}
+/* The list: a menu, with 28 px rows and the menus' faint tint under the pointer. */
 QComboBox QAbstractItemView {{
     background-color: {T['menu']};
     color: {T['fg']};
     border: 1px solid {T['line_strong']};
+    padding: 4px;
     selection-background-color: {B['hover_menu']};
-    selection-color: {T['fg_strong']};
+    selection-color: {T['fg']};
     outline: 0;
+}}
+QComboBox QAbstractItemView::item {{
+    min-height: 28px;
+    padding: 0 8px 0 10px;
+    border: none;
+    border-radius: 4px;
+    color: {T['fg']};
+}}
+QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover {{
+    background-color: {B['hover_menu']};
+    color: {T['fg']};
+}}
+QComboBox QAbstractItemView::item:disabled {{
+    color: {B['disabled']};
 }}
 QAbstractSpinBox {{
     padding-right: 20px;
@@ -300,6 +376,130 @@ QPushButton::menu-indicator {{
     width: 10px;
     height: 10px;
     right: -6px;
+}}
+
+/* Scrollbars: 10 px, no track, a 6 px rounded thumb, and a triangle in a 12 px button at
+   each end. */
+QScrollBar {{
+    background: transparent;
+    border: none;
+}}
+QScrollBar:vertical {{
+    width: 10px;
+    padding: 12px 0;
+}}
+QScrollBar:horizontal {{
+    height: 10px;
+    padding: 0 12px;
+}}
+QScrollBar::handle {{
+    background: {rgba(T['fg'], SCROLL_THUMB_ALPHA)};
+    border-radius: 3px;
+}}
+QScrollBar::handle:vertical {{
+    margin: 0 2px;
+    min-height: 24px;
+}}
+QScrollBar::handle:horizontal {{
+    margin: 2px 0;
+    min-width: 24px;
+}}
+QScrollBar::handle:hover, QScrollBar::handle:pressed {{
+    background: {rgba(T['fg'], SCROLL_THUMB_HOVER_ALPHA)};
+}}
+QScrollBar::add-page, QScrollBar::sub-page {{
+    background: transparent;
+}}
+QScrollBar::add-line, QScrollBar::sub-line {{
+    background: transparent;
+    border: none;
+    subcontrol-origin: border;
+}}
+QScrollBar::sub-line:vertical {{
+    subcontrol-position: top;
+    height: 12px;
+}}
+QScrollBar::add-line:vertical {{
+    subcontrol-position: bottom;
+    height: 12px;
+}}
+QScrollBar::sub-line:horizontal {{
+    subcontrol-position: left;
+    width: 12px;
+}}
+QScrollBar::add-line:horizontal {{
+    subcontrol-position: right;
+    width: 12px;
+}}
+QScrollBar::up-arrow, QScrollBar::down-arrow, QScrollBar::left-arrow, QScrollBar::right-arrow {{
+    width: 6px;
+    height: 6px;
+}}
+QScrollBar::up-arrow {{
+    image: url({arrow('scroll-up')});
+}}
+QScrollBar::down-arrow {{
+    image: url({arrow('scroll-down')});
+}}
+QScrollBar::left-arrow {{
+    image: url({arrow('scroll-left')});
+}}
+QScrollBar::right-arrow {{
+    image: url({arrow('scroll-right')});
+}}
+QAbstractScrollArea::corner {{
+    background: transparent;
+    border: none;
+}}
+/* The track is the background of what scrolls: the surface of lists and text, the chrome of
+   the Tag browser and Book details (calibre's TagsView and BookInfo). */
+QAbstractItemView QScrollBar, QAbstractItemView::corner,
+QTextEdit QScrollBar, QTextEdit::corner, QPlainTextEdit QScrollBar, QPlainTextEdit::corner {{
+    background: {T['surface']};
+}}
+TagsView QScrollBar, TagsView::corner, BookInfo QScrollBar, BookInfo::corner {{
+    background: {T['chrome']};
+}}
+QComboBox QAbstractItemView QScrollBar {{
+    background: {T['menu']};
+}}
+
+/* The book list: no frame, so it meets the side panels at their edge line, as the pages meet
+   Lectrix's side panes. */
+BooksView {{
+    border: none;
+}}
+
+/* Column headers, the book list's among them: no fill of their own, muted text over a thin
+   line, as Lectrix's tables have, with faint lines between columns to resize them by. */
+QHeaderView {{
+    background-color: {T['surface']};
+    border: none;
+}}
+QHeaderView::section, QTableCornerButton::section {{
+    background-color: {T['surface']};
+    color: {T['fg_muted']};
+    border: none;
+    border-right: 1px solid {T['line']};
+    border-bottom: 1px solid {T['line']};
+    padding: 4px 6px;
+}}
+QHeaderView::section:hover {{
+    background-color: {B['hover_surface']};
+    color: {T['fg']};
+}}
+QHeaderView::up-arrow, QHeaderView::down-arrow {{
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 10px;
+    height: 10px;
+    padding-right: 4px;
+}}
+QHeaderView::up-arrow {{
+    image: url({arrow('up')});
+}}
+QHeaderView::down-arrow {{
+    image: url({arrow('down')});
 }}
 
 /* The selected tab: outlined in Lectrix's line color rather than calibre's grey. */
