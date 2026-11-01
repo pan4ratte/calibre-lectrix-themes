@@ -11,8 +11,8 @@ Needs calibre 7 or newer. The title bar colors need Windows 11.
 
 ## Install
 
-1. Run `python build.py`.
-2. In calibre, go to Preferences → Plugins → **Load plugin from file**, and load both zips from `dist/`. Restart calibre.
+1. Download `lectrix-themes.zip` and `lectrix-themes-edit-book.zip` from the [latest release](https://github.com/pan4ratte/calibre-lectrix-themes/releases/latest).
+2. In calibre, go to Preferences → Plugins → **Load plugin from file**, and load both zips. Restart calibre.
 3. In Preferences → Look & feel → Main interface, make sure "User interface style" is **calibre**. Calibre ignores custom colors with the "System" style.
 
 Calibre's mode is set under **Adjust colors** → "Color palette": Light, Dark, or System default to follow Windows.
@@ -33,7 +33,7 @@ Calibre doesn't tell plugins when they're removed, so untick this before removin
 
 ### Colors only, without the plugins
 
-`lectrix.calibre-palette` holds the same light and dark colors for calibre's own palette import. Click **Adjust colors**, then **Import**, and choose the file. You get Lectrix's colors without the title bar, field and menu styling.
+`lectrix.calibre-palette`, also in the release, holds the same light and dark colors for calibre's own palette import. Click **Adjust colors**, then **Import**, and choose the file. You get Lectrix's colors without the title bar, field and menu styling.
 
 ## Pairs well with Calibre Modern GNOME
 
@@ -93,3 +93,7 @@ Calibre's 16 palette colors each take a Lectrix design token from `src/app.css`:
 ## Building
 
 All colors live in [src/lectrix_theme.py](src/lectrix_theme.py). `python build.py` writes the palette file from it and packs both plugins into `dist/`. Each plugin carries a copy of the shared modules, `lectrix_theme.py` and `chrome.py`. The main plugin notices any change to the palette colors there and applies them again after an update.
+
+## License
+
+GPL v3, like calibre itself. See [LICENSE](LICENSE).

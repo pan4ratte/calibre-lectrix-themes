@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # Builds the palette file and both plugin zips from src/:
 #   lectrix.calibre-palette
-#   dist/Lectrix themes.zip                 (calibre's main window)
-#   dist/Lectrix themes for Edit book.zip   (the book editor)
+#   dist/lectrix-themes.zip            (calibre's main window)
+#   dist/lectrix-themes-edit-book.zip  (the book editor)
 # Run: python build.py
 
 import json
@@ -16,8 +16,8 @@ DIST = ROOT / 'dist'
 SHARED = ('lectrix_theme.py', 'chrome.py')
 
 PLUGINS = {
-    'Lectrix themes.zip': ('main_plugin', 'lectrix_themes'),
-    'Lectrix themes for Edit book.zip': ('editor_plugin', 'lectrix_themes_editor'),
+    'lectrix-themes.zip': ('main_plugin', 'lectrix_themes'),
+    'lectrix-themes-edit-book.zip': ('editor_plugin', 'lectrix_themes_editor'),
 }
 
 
