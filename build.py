@@ -42,6 +42,8 @@ def build_plugins():
         with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as zf:
             for f in sorted((SRC / folder).glob('*.py')):
                 zf.write(f, f.name)
+            for f in sorted((SRC / folder).glob('images/*.png')):
+                zf.write(f, f'images/{f.name}')
             for name in SHARED:
                 zf.write(SRC / name, name)
             zf.writestr(f'plugin-import-name-{import_name}.txt', '')

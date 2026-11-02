@@ -12,7 +12,7 @@ Needs calibre 7 or newer. The title bar colors and the round corners of menus an
 ## Install
 
 1. Download `lectrix-themes.zip` and `lectrix-themes-edit-book.zip` from the [latest release](https://github.com/pan4ratte/calibre-lectrix-themes/releases/latest).
-2. In calibre, go to Preferences → Plugins → **Load plugin from file**, and load both zips. Restart calibre.
+2. In calibre, go to Preferences → Plugins → **Load plugin from file**, and load both zips. When calibre asks where to put the Lectrix themes button, pick the main toolbar. Restart calibre.
 3. In Preferences → Look & feel → Main interface, make sure "User interface style" is **calibre**. Calibre ignores custom colors with the "System" style.
 
 Calibre's mode is set under **Adjust colors** → "Color palette": Light, Dark, or System default to follow Windows.
@@ -21,9 +21,16 @@ Calibre's mode is set under **Adjust colors** → "Color palette": Light, Dark, 
 
 Lectrix themes sets the light and dark colors in Adjust colors to Lectrix's on its first start, and again only when an update changes them. Changes you make in Adjust colors in between are kept. All of calibre's windows read these colors, the e-book viewer and the editor included.
 
+### The toolbar button
+
+Click **Lectrix themes** on the toolbar to switch calibre between light and dark. Right-click it, or click its arrow, for the rest:
+
+- **Light**, **Dark** and **System default**, calibre's Color palette choices from Adjust colors;
+- **Use the Lectrix theme**, to turn the theme on and off.
+
 ### Turning it off
 
-Untick **Use the Lectrix theme** in Preferences → Plugins → Lectrix themes → **Customize plugin**. Everything is undone at once:
+Right-click **Lectrix themes** on the toolbar and untick **Use the Lectrix theme**, or untick it in Preferences → Plugins → Lectrix themes → **Customize plugin**. Everything is undone at once:
 
 - the colors you had before come back, in both modes;
 - the title bar, field, button and menu styling goes;

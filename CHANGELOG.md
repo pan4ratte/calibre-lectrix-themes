@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 1.2.0
+
+### New features
+
+* A **Lectrix themes** button on the main toolbar. Clicking it switches calibre between light and dark. Right-clicking it opens a menu to pick Light, Dark or System default, or turn the theme on and off. If you're updating, the button is added at the end of the toolbar once; you can move or remove it in Preferences → Toolbars & menus.
+
+
 ## 1.1.0
 
 ### UI/UX improvements
