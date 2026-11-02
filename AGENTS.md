@@ -33,6 +33,7 @@ Needs calibre 7 or newer. The title bar colors are Windows 11 only.
 ## Building and testing
 
 - `python build.py` writes `lectrix.calibre-palette` and `dist/lectrix-themes.zip` and `dist/lectrix-themes-edit-book.zip`. `dist/` is ignored. Commit the palette file whenever the colors change.
+- `python build.py --install` also loads both zips into calibre: it closes calibre if it is open (`calibre-debug -s`, which aborts running jobs), installs them with `calibre-customize -a` and starts calibre again. Run it after every change.
 - There are no automated tests. Plugins are checked in calibre: load both zips in Preferences → Plugins → Load plugin from file, restart, and look at both modes, the main window, a few dialogs and the book editor. Don't load a `src/` plugin folder directly (`calibre-customize -b`): it lacks the shared modules.
 - calibre's own source is the reference for anything about palettes, `gprefs`, `tprefs` and plugin APIs. A copy is in the neighbouring folder `../calibre`, a shallow clone at the tag of the installed calibre (`calibre-debug --version`). Read it there rather than fetching files from GitHub. The installed calibre ships compiled code only. Its style, `CalibreStyle`, is C++ in `src/calibre/gui2/progress_indicator/CalibreStyle.cpp`. After a calibre update, move the clone to the new tag: `git -C ../calibre fetch --depth 1 origin tag v<version>` then `git -C ../calibre checkout v<version>`.
 
