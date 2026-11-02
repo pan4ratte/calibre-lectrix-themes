@@ -12,6 +12,8 @@ TOKENS = {
         'chrome': '#f2f4f7',  # title bar, toolbars and panes
         'surface': '#f9fafb',  # lists, fields, the editor
         'menu': '#e4e9f1',  # menus, tooltips
+        'raised': '#f9fafb',  # cards
+        'card_hover_line': '#6fa3ef',  # a card's edge under the pointer
         'button': '#f2f4f7',
         'button_hover': '#e4e9f1',
         'line': '#ccd3dd',
@@ -36,6 +38,8 @@ TOKENS = {
         'chrome': '#131416',
         'surface': '#0c0d0e',
         'menu': '#1c1e22',
+        'raised': '#1c1e22',
+        'card_hover_line': '#6fa3ef',
         'button': '#262a31',
         'button_hover': '#2a2f37',
         'line': '#303540',
@@ -195,6 +199,39 @@ def arrow_images(mode):
             f'<path d="{path}" fill="{T["fg"]}" fill-opacity="{SCROLL_THUMB_ALPHA}"/></svg>'
         )
     return ans
+
+
+# The shadows of Lectrix's tool cards, as CSS box-shadows: (x, y, blur, spread, (r, g, b, a)).
+# At rest --lectrix-shadow-rest, a soft glow under the card; under the pointer, and pressed,
+# --lectrix-shadow-hover.
+CARD_SHADOWS = {
+    'light': {
+        'rest': (0, 6, 20, -10, (15, 37, 88, 0.1)),
+        'hover': (0, 8, 24, 0, (15, 37, 88, 0.14)),
+    },
+    'dark': {
+        'rest': (0, 6, 20, -10, (0, 0, 0, 0.5)),
+        'hover': (0, 8, 24, 0, (0, 0, 0, 0.55)),
+    },
+}
+# A card lifts this many pixels under the pointer, and pressed (translateY(-3px), (-1px)),
+# and pressed it sinks back a little (scale(0.98)).
+CARD_LIFT = {'rest': 0, 'hover': 3, 'pressed': 1}
+CARD_PRESSED_SCALE = 0.98
+# The ripple a press sends across a card (--lectrix-ripple, in both modes): a 10 px dot where
+# it was pressed, grown 48 times as it fades from 55% (--lectrix-duration-slow, ease-out).
+CARD_RIPPLE = (111, 163, 239, 0.35)
+CARD_RIPPLE_DOT = 10
+CARD_RIPPLE_GROWTH = 48
+CARD_RIPPLE_OPACITY = 0.55
+CARD_RIPPLE_MS = 400
+CSS_EASE_OUT = (0, 0, 0.58, 1)
+# How a card moves between them, and its shadow changes: --lectrix-duration-base and
+# --lectrix-ease-out, a cubic-bezier().
+CARD_MOTION_MS = 250
+CARD_EASE = (0.2, 0.8, 0.2, 1)
+# The room round a card: half of the 12 px gap between Lectrix's cards.
+CARD_MARGIN = 6
 
 
 def stylesheet(mode, arrow):
@@ -507,6 +544,18 @@ QTabBar::tab:selected {{
     border-color: {T['line_strong']};
 }}
 
+/* calibre's Preferences: each page a card, as the tools on Lectrix's start screen. chrome.py
+   sizes them, paints their shadows and their edge, which fades to blue under the pointer,
+   and moves them. */
+Browser Category QToolButton {{
+    background-color: {T['raised']};
+    color: {T['fg_strong']};
+    border: 1px solid transparent;
+    border-radius: 12px;
+    margin: {CARD_MARGIN}px;
+    padding: 8px 12px;
+}}
+
 /* The toolbar's edge. */
 QToolBar {{
     background-color: {T['chrome']};
@@ -547,6 +596,55 @@ QToolTip {{
     padding: 3px 6px;
 }}
 '''
+
+
+def card_edge(mode, raised):
+    "A Preferences card's edge: the line color at rest, Lectrix's card hover line raised, between."
+    T = TOKENS[mode]
+    a, b = T['line'], T['card_hover_line']
+    rgb = [round(int(a[i:i + 2], 16) + (int(b[i:i + 2], 16) - int(a[i:i + 2], 16)) * raised) for i in (1, 3, 5)]
+    return '#{:02x}{:02x}{:02x}'.format(*rgb)
+
+
+def card_shadow(mode, raised):
+    """A Preferences card's shadow: at rest for raised 0, under the pointer for 1, and part
+    way between, as CSS moves from one box-shadow to another, for what lies between."""
+    rest, hover = CARD_SHADOWS[mode]['rest'], CARD_SHADOWS[mode]['hover']
+    if raised <= 0:
+        return rest
+    if raised >= 1:
+        return hover
+    nums = tuple(a + (b - a) * raised for a, b in zip(rest[:4], hover[:4]))
+    r, g, b = (round(a + (b - a) * raised) for a, b in zip(rest[4][:3], hover[4][:3]))
+    alpha = rest[4][3] + (hover[4][3] - rest[4][3]) * raised
+    return nums + ((r, g, b, alpha),)
+
+
+def shadow_extent(shadow):
+    "How far a box-shadow can reach past its box, on any side."
+    x, y, blur, spread, _ = shadow
+    return int(blur * 1.5 + max(spread, 0) + max(abs(x), abs(y))) + 1
+
+
+def shadow_profile(length, start, end, sigma, samples):
+    """A box-shadow across one axis: how much of it there is at evenly spaced points along
+    length, for a box from start to end blurred as CSS blurs it (a Gaussian with sigma half
+    the blur). Gives (position from 0 to 1, amount from 0 to 1) pairs."""
+    import math
+
+    ans = []
+    for i in range(samples + 1):
+        t = i / samples
+        pos = t * length
+        if end <= start:
+            v = 0.0
+        elif sigma <= 0:
+            v = 1.0 if start <= pos <= end else 0.0
+        else:
+            k = sigma * math.sqrt(2)
+            v = 0.5 * (math.erf((pos - start) / k) - math.erf((pos - end) / k))
+        ans.append((t, max(0.0, min(1.0, v))))
+    return ans
 
 
 def hover_text(mode):

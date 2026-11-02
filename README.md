@@ -4,7 +4,7 @@ Lectrix's light and dark themes for calibre. Lectrix's colors come from Neo's li
 
 The themes come as two plugins:
 
-- **Lectrix themes**: sets calibre's light and dark colors to Lectrix's, and styles what the colors alone can't reach in the main window and its dialogs. That means the title bar, fields, buttons, menus, tooltips, scrollbars, the toolbar's edge, the side panels' edges, the book list's column headers, the Tag browser's hover and the book list's current cell.
+- **Lectrix themes**: sets calibre's light and dark colors to Lectrix's, and styles what the colors alone can't reach in the main window and its dialogs. That means the title bar, fields, buttons, menus, tooltips, scrollbars, the toolbar's edge, the side panels' edges, the book list's column headers, the Tag browser's hover, the book list's current cell and the cards in Preferences.
 - **Lectrix themes for Edit book**: the same styling for the book editor, plus "Lectrix light" and "Lectrix dark" syntax themes.
 
 Needs calibre 7 or newer. The title bar colors and the round corners of menus and dropdown lists need Windows 11.
@@ -67,6 +67,7 @@ To go back to calibre's own icons, delete `resources/images` and restart.
 | Toolbar and tabs | The toolbar's lower edge and the selected tab's outline in Lectrix's line color |
 | Side panels | The Tag browser and Book details end in a thin line where they meet the book list, as Lectrix's side panes do, in the accent under the pointer. Calibre's own handles are bars with dots. |
 | Scrollbars | Thin, as in Lectrix: no track, a rounded thumb in the text color that gets stronger under the pointer, and a small arrow at each end |
+| Preferences | Each page is a card on a grid, its name beside the icon, as the tools on Lectrix's start screen: a thin edge, round corners and Lectrix's soft shadow. As in Lectrix, a card rises smoothly under the pointer, with a deeper shadow and its edge fading to blue, and sinks back a little when pressed, with a ripple running out from where it was clicked. The lines between categories go. |
 | Column headers | The book list's and other lists' headers: muted text over a thin line, faint lines between columns, and Lectrix arrows for the sort order |
 | Tag browser | A faint hover. Calibre's own hover in dark mode is brighter than the selection, with black text. |
 | Book list's current cell | Looks like the rest of the selected row. Calibre's own style draws it lighter, with black text in dark mode. |

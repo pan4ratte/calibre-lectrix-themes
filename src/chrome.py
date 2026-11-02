@@ -1,18 +1,59 @@
 # What the palette can't reach: the Windows title bar, fields, buttons, menus and tooltips,
-# the Tag browser's hover and lists' current cell. Styled for the mode calibre is in (light
+# the Tag browser's hover, lists' current cell and the cards of Preferences. Styled for the mode calibre is in (light
 # or dark), and all undone when the theme is turned off.
 
 import sys
 
-from qt.core import QAbstractItemView, QApplication, QColor, QEvent, QMenu, QObject, QPainter, QRect, Qt
+from qt.core import (
+    QAbstractItemView,
+    QAbstractScrollArea,
+    QApplication,
+    QColor,
+    QEasingCurve,
+    QEvent,
+    QGraphicsEffect,
+    QIcon,
+    QImage,
+    QLinearGradient,
+    QMenu,
+    QObject,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QPoint,
+    QPointF,
+    QRect,
+    QRectF,
+    QSize,
+    Qt,
+    QToolButton,
+    QTransform,
+    QVariantAnimation,
+)
 
 from .lectrix_theme import (
+    CARD_EASE,
+    CARD_LIFT,
+    CARD_MARGIN,
+    CARD_MOTION_MS,
+    CARD_PRESSED_SCALE,
+    CARD_RIPPLE,
+    CARD_RIPPLE_DOT,
+    CARD_RIPPLE_GROWTH,
+    CARD_RIPPLE_MS,
+    CARD_RIPPLE_OPACITY,
+    CSS_EASE_OUT,
     MODES,
     arrow_images,
+    card_edge,
+    card_shadow,
     colorref,
     hover_text,
     pane_edge,
     popup_edge,
+    shadow_extent,
+    shadow_profile,
     stylesheet,
     title_bar,
     tree_hover_stylesheet,
@@ -177,6 +218,7 @@ class Chrome(QObject):
         self.enabled = theme_enabled()
         mode = self.mode
         self.update_stylesheet(mode)
+        refresh_preference_tiles(self.app)
         for window in self.app.topLevelWindows():
             if window.isVisible():
                 self.update_title_bar(window, mode)
@@ -322,6 +364,368 @@ def patch_panel_edges(chrome):
     handle_class.paintEvent = paintEvent
 
 
+# A Preferences card is this many pixels high, with the room round it: the icon, and up to
+# two lines of text beside it.
+PREFERENCE_CARD_HEIGHT = 70
+PREFERENCE_ICON = 32  # calibre's icon size there
+# Qt puts 4 px between a button's icon and its text: the icon gets this much blank space on
+# its right for a wider gap.
+PREFERENCE_ICON_GAP = 8
+# What the text can't use of a card's width: its margin, edge and padding (as the stylesheet
+# has them), the icon with its gap, and Qt's 4 px.
+PREFERENCE_CARD_INSET = 2 * CARD_MARGIN + 2 + 24 + PREFERENCE_ICON + PREFERENCE_ICON_GAP + 4
+QWIDGETSIZE_MAX = 16777215
+
+
+def patch_preference_tiles(chrome):
+    # calibre's Preferences shows its pages as flat buttons, a row to a category, each as wide
+    # as a column of the window, with the name under the icon, and a line between categories.
+    # With the theme on they are cards of one height with Lectrix's shadow, the name beside
+    # the icon, so the rows line up as a grid of rectangles, and the lines go. The stylesheet
+    # draws the cards, CardShadows their shadows.
+    main = sys.modules.get('calibre.gui2.preferences.main')
+    category = getattr(main, 'Category', None)
+    original = getattr(category, 'update_button_widths', None)
+    if original is None or getattr(original, 'lectrix_themes', False):
+        return
+    wrap = getattr(main, 'wrap_preference_button_text', None)
+    separator = getattr(main, 'SectionSeparator', None)
+    shadows = CardShadows(chrome, category)
+
+    def update_button_widths(self, available_width=None):
+        original(self, available_width)
+        mode = chrome.mode
+        shadows.watch(self)
+        if separator is not None:
+            for line in self.findChildren(separator):
+                line.setVisible(mode is None)
+        for button, text in getattr(self, 'buttons', ()):
+            if mode is not None:
+                button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+                button.setFixedHeight(PREFERENCE_CARD_HEIGHT)
+                set_card_icon(button, True)
+                set_card_lift(button, True, chrome)
+                if wrap is not None:
+                    width = button.minimumWidth() - PREFERENCE_CARD_INSET
+                    button.setText(wrap(text, width, button.fontMetrics()))
+            else:
+                button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+                button.setMinimumHeight(0)
+                button.setMaximumHeight(QWIDGETSIZE_MAX)
+                set_card_icon(button, False)
+                set_card_lift(button, False)
+
+    update_button_widths.lectrix_themes = True
+    category.update_button_widths = update_button_widths
+
+
+def set_card_icon(button, card):
+    "Give a Preferences button its icon with blank space on the right, or its own icon back."
+    action = button.defaultAction()
+    if action is None:
+        return
+    if not card:
+        if getattr(button, 'lectrix_themes_icon', None) is not None:
+            button.lectrix_themes_icon = None
+            button.setIcon(action.icon())
+            button.setIconSize(QSize(PREFERENCE_ICON, PREFERENCE_ICON))
+        return
+    dpr = button.devicePixelRatioF()
+    if getattr(button, 'lectrix_themes_icon', None) == dpr:
+        return
+    size = PREFERENCE_ICON
+    pixmap = QPixmap(round((size + PREFERENCE_ICON_GAP) * dpr), round(size * dpr))
+    pixmap.setDevicePixelRatio(dpr)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    p = QPainter(pixmap)
+    action.icon().paint(p, QRect(0, 0, size, size))
+    p.end()
+    button.setIcon(QIcon(pixmap))
+    button.setIconSize(QSize(size + PREFERENCE_ICON_GAP, size))
+    button.lectrix_themes_icon = dpr
+
+
+def bezier(points):
+    "A CSS cubic-bezier() as a Qt easing curve."
+    curve = QEasingCurve(QEasingCurve.Type.BezierSpline)
+    x1, y1, x2, y2 = points
+    curve.addCubicBezierSegment(QPointF(x1, y1), QPointF(x2, y2), QPointF(1, 1))
+    return curve
+
+
+class CardMotion(QObject):
+    """A Preferences card's motion, eased toward what the pointer asks for as Lectrix's
+    transitions are: how far it is lifted, how far it has sunk on a press, how far its shadow
+    and edge have gone from rest to hover, and the ripples of its presses."""
+
+    def __init__(self, button, page):
+        super().__init__(button)
+        self.button, self.page = button, page
+        self.hovered = False
+        self.focused = False  # by the keyboard
+        self.lift = 0.0  # px
+        self.scale = 1.0
+        self.raised = 0.0  # 0 the resting shadow and edge, 1 the hover ones
+        self.ripples = []  # [x, y, progress from 0 to 1], in the button
+        self.animations = {name: self.animation(name) for name in ('lift', 'scale', 'raised')}
+        button.pressed.connect(self.retarget)
+        button.released.connect(self.retarget)
+
+    def animation(self, name):
+        a = QVariantAnimation(self)
+        a.setDuration(CARD_MOTION_MS)
+        a.setEasingCurve(bezier(CARD_EASE))
+        a.valueChanged.connect(lambda value: self.moved(name, value))
+        return a
+
+    def moved(self, name, value):
+        setattr(self, name, float(value))
+        self.repaint()
+
+    def repaint(self):
+        self.button.update()
+        pos = self.button.mapTo(self.page, QPoint(0, 0))
+        reach = 48  # past the button, for the hover shadow
+        self.page.update(QRect(pos, self.button.size()).adjusted(-reach, -reach, reach, reach))
+
+    @property
+    def moving(self):
+        return any(a.state() == QVariantAnimation.State.Running for a in self.animations.values())
+
+    def retarget(self):
+        down = self.button.isDown()
+        lit = self.hovered or self.focused  # Lectrix: :hover or :focus-visible
+        state = 'pressed' if down else 'hover' if lit else 'rest'
+        targets = {
+            'lift': float(CARD_LIFT[state]),
+            'scale': CARD_PRESSED_SCALE if down else 1.0,
+            'raised': 1.0 if state != 'rest' else 0.0,
+        }
+        for name, target in targets.items():
+            a = self.animations[name]
+            current = getattr(self, name)
+            if a.state() == QVariantAnimation.State.Running and a.endValue() == target:
+                continue
+            a.stop()
+            if current != target:
+                a.setStartValue(current)
+                a.setEndValue(target)
+                a.start()
+
+    def ripple(self, x, y):
+        "Send a ripple out from where the card was pressed."
+        ripple = [x, y, 0.0]
+        self.ripples.append(ripple)
+        a = QVariantAnimation(self)
+        a.setDuration(CARD_RIPPLE_MS)
+        a.setEasingCurve(bezier(CSS_EASE_OUT))
+        a.setStartValue(0.0)
+        a.setEndValue(1.0)
+
+        def step(value):
+            ripple[2] = float(value)
+            self.button.update()
+
+        def done():
+            if ripple in self.ripples:
+                self.ripples.remove(ripple)
+            self.button.update()
+            a.deleteLater()
+
+        a.valueChanged.connect(step)
+        a.finished.connect(done)
+        a.start()
+
+
+class CardLift(QGraphicsEffect):
+    """Draws a Preferences card as its CardMotion has it: lifted and sunk, smoothly while it
+    moves and on whole pixels at rest so the text is sharp, with its ripples and its edge."""
+
+    def __init__(self, button, chrome):
+        super().__init__(button)
+        self.chrome = chrome
+
+    def draw(self, painter):
+        button = self.parent()
+        motion = getattr(button, 'lectrix_themes_motion', None)
+        mode = self.chrome.mode
+        if motion is None or mode is None:
+            self.drawSource(painter)
+            return
+        card = QRectF(button.rect()).adjusted(CARD_MARGIN, CARD_MARGIN, -CARD_MARGIN, -CARD_MARGIN)
+        lift, scale = motion.lift, motion.scale
+        dpr = button.devicePixelRatioF()
+        if not motion.moving:
+            lift = round(lift * dpr) / dpr
+        # The card is drawn from its image, never with drawSource(): after that the painter
+        # can't be used for the edge. No save() and restore() either, as Qt paints the card
+        # through this same painter: what is changed is put back by hand.
+        world = QTransform(painter.worldTransform())  # a copy: Qt gives the painter's own
+        hints = painter.renderHints()
+        c = card.center()
+        move = QTransform()
+        move.translate(c.x(), c.y() - lift)
+        move.scale(scale, scale)
+        move.translate(-c.x(), -c.y())
+        pixmap, offset = self.sourcePixmap(Qt.CoordinateSystem.DeviceCoordinates, QGraphicsEffect.PixmapPadMode.NoPad)
+        if not pixmap.isNull():
+            inverse, ok = world.inverted()
+            painter.setWorldTransform(inverse * move * world if ok else QTransform())
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, motion.moving or scale != 1)
+            painter.drawPixmap(QPointF(offset), pixmap)
+        painter.setWorldTransform(move * world)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        outline = QPainterPath()
+        outline.addRoundedRect(card, 12, 12)
+        r, g, b, a = CARD_RIPPLE
+        for x, y, t in motion.ripples:
+            radius = CARD_RIPPLE_DOT / 2 * CARD_RIPPLE_GROWTH * t
+            dot = QPainterPath()
+            dot.addEllipse(QPointF(x, y), radius, radius)
+            opacity = a * CARD_RIPPLE_OPACITY * (1 - t)
+            painter.fillPath(dot.intersected(outline), QColor(r, g, b, round(255 * opacity)))
+        pen = QPen(QColor(card_edge(mode, motion.raised)))
+        pen.setWidthF(1)
+        edge = QPainterPath()
+        edge.addRoundedRect(card.adjusted(0.5, 0.5, -0.5, -0.5), 11.5, 11.5)
+        painter.strokePath(edge, pen)
+        painter.setWorldTransform(world)
+        painter.setRenderHints(hints)
+
+
+def set_card_lift(button, card, chrome=None):
+    "Give a Preferences button the effect that moves and edges it, or take it away."
+    effect = button.graphicsEffect()
+    if card:
+        if effect is None:
+            button.setGraphicsEffect(CardLift(button, chrome))
+    elif isinstance(effect, CardLift):
+        button.setGraphicsEffect(None)
+
+
+def shadow_image(width, height, shadow, dpr):
+    """A CSS box-shadow of a width x height box, as an image reaching shadow_extent() past the
+    box on each side. A blurred box is its blur across times its blur down, so a gradient
+    across, cut by a gradient down, draws it."""
+    x, y, blur, spread, (r, g, b, a) = shadow
+    pad = shadow_extent(shadow)
+    w, h = width + 2 * pad, height + 2 * pad
+    image = QImage(max(1, round(w * dpr)), max(1, round(h * dpr)), QImage.Format.Format_ARGB32_Premultiplied)
+    image.setDevicePixelRatio(dpr)
+    image.fill(Qt.GlobalColor.transparent)
+    sigma = blur / 2
+    across = QLinearGradient(0, 0, w, 0)
+    for t, v in shadow_profile(w, pad + x - spread, pad + x + width + spread, sigma, max(16, w // 3)):
+        across.setColorAt(t, QColor(r, g, b, round(255 * a * v)))
+    down = QLinearGradient(0, 0, 0, h)
+    for t, v in shadow_profile(h, pad + y - spread, pad + y + height + spread, sigma, max(16, h // 3)):
+        down.setColorAt(t, QColor(0, 0, 0, round(255 * v)))
+    p = QPainter(image)
+    p.fillRect(QRectF(0, 0, w, h), across)
+    p.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
+    p.fillRect(QRectF(0, 0, w, h), down)
+    p.end()
+    return image, pad
+
+
+class CardShadows(QObject):
+    """Paints the shadows of the Preferences cards on the page behind them, where nothing
+    between the cards clips them, and starts a card's motion as it is hovered."""
+
+    def __init__(self, chrome, category):
+        super().__init__(chrome)
+        self.chrome = chrome
+        self.category = category
+        self.images = {}
+
+    def watch(self, category):
+        page = category.parentWidget()
+        if page is None or isinstance(page, QAbstractScrollArea):
+            return  # not in the page yet: calibre puts it there after making it
+        if not getattr(page, 'lectrix_themes_shadows', False):
+            page.lectrix_themes_shadows = True
+            page.installEventFilter(self)
+        for button, _ in getattr(category, 'buttons', ()):
+            if getattr(button, 'lectrix_themes_motion', None) is None:
+                button.lectrix_themes_motion = CardMotion(button, page)
+                button.installEventFilter(self)
+        page.update()
+
+    def eventFilter(self, obj, event):
+        t = event.type()
+        if t == QEvent.Type.Paint and getattr(obj, 'lectrix_themes_shadows', False):
+            mode = self.chrome.mode
+            if mode is not None:
+                try:
+                    self.paint(obj, mode)
+                except Exception:
+                    import traceback
+
+                    traceback.print_exc()
+        elif isinstance(obj, QToolButton):
+            motion = getattr(obj, 'lectrix_themes_motion', None)
+            if motion is None or self.chrome.mode is None:
+                return False
+            if t in (QEvent.Type.Enter, QEvent.Type.Leave):
+                motion.hovered = t == QEvent.Type.Enter
+                motion.retarget()
+            elif t in (QEvent.Type.FocusIn, QEvent.Type.FocusOut):
+                # Lit only when Tab brought the focus, as :focus-visible is, not when the window
+                # opened with the focus on it.
+                keyboard = event.reason() in (Qt.FocusReason.TabFocusReason, Qt.FocusReason.BacktabFocusReason)
+                motion.focused = t == QEvent.Type.FocusIn and keyboard
+                motion.retarget()
+            elif t == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
+                pos = event.position()
+                motion.ripple(pos.x(), pos.y())
+            elif t == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
+                c = QRectF(obj.rect()).center()
+                motion.ripple(c.x(), c.y())
+        return False
+
+    def paint(self, page, mode):
+        dpr = page.devicePixelRatioF()
+        p = QPainter(page)
+        for category in page.findChildren(self.category):
+            for button, _ in getattr(category, 'buttons', ()):
+                if not button.isVisible():
+                    continue
+                w = button.width() - 2 * CARD_MARGIN
+                h = button.height() - 2 * CARD_MARGIN
+                if w <= 0 or h <= 0:
+                    continue
+                motion = getattr(button, 'lectrix_themes_motion', None)
+                lift = motion.lift if motion is not None else 0
+                raised = motion.raised if motion is not None else 0
+                shadow = card_shadow(mode, raised)
+                if raised in (0, 1):  # kept: the two shadows a card rests at
+                    key = (w, h, shadow, dpr)
+                    if key not in self.images:
+                        if len(self.images) > 64:
+                            self.images.clear()
+                        self.images[key] = shadow_image(w, h, shadow, dpr)
+                    image, pad = self.images[key]
+                else:
+                    image, pad = shadow_image(w, h, shadow, dpr)
+                pos = button.mapTo(page, QPoint(0, 0))
+                top = pos.y() + CARD_MARGIN - lift
+                p.drawImage(QPointF(pos.x() + CARD_MARGIN - pad, top - pad), image)
+        p.end()
+
+
+def refresh_preference_tiles(app):
+    "Resize an open Preferences' buttons when the theme is turned on or off."
+    category = getattr(sys.modules.get('calibre.gui2.preferences.main'), 'Category', None)
+    if category is None:
+        return
+    for top in app.topLevelWidgets():
+        for widget in top.findChildren(category):
+            try:
+                widget.update_button_widths()
+            except Exception:
+                pass
+
+
 def install():
     app = QApplication.instance()
     if app is None or not hasattr(app, 'palette_changed'):
@@ -332,6 +736,7 @@ def install():
     chrome = Chrome(app)
     app.lectrix_themes_chrome = chrome
     patch_panel_edges(chrome)
+    patch_preference_tiles(chrome)
     if patch_tree_hover(chrome):
         # Views that use the hover style restyle themselves on this signal.
         app.palette_changed.emit()

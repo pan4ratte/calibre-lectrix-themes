@@ -7,6 +7,10 @@
 
 * A **Lectrix themes** button on the main toolbar. Clicking it switches calibre between light and dark. Right-clicking it opens a menu to pick Light, Dark or System default, or turn the theme on and off. If you're updating, the button is added at the end of the toolbar once; you can move or remove it in Preferences → Toolbars & menus.
 
+### UI/UX improvements
+
+* Preferences shows its pages as a grid of cards with the name beside the icon, as Lectrix's start screen shows its tools: a thin edge, round corners and Lectrix's soft shadow. As in Lectrix, a card rises smoothly under the pointer, with a deeper shadow and its edge fading to blue, and sinks back a little when pressed, with a ripple running out from where it was clicked. The lines between categories are gone. Calibre's own are flat buttons stretched across the window.
+
 
 ## 1.1.0
 
