@@ -5,7 +5,8 @@
 
 ### New features
 
-* A **Lectrix themes** button on the main toolbar. Clicking it switches calibre between light and dark. Right-clicking it opens a menu to pick Light, Dark or System default, or turn the theme on and off. If you're updating, the button is added at the end of the toolbar once; you can move or remove it in Preferences → Toolbars & menus.
+* A **Lectrix themes** button on the main toolbar. Clicking it switches calibre between light and dark. Right-clicking it opens a menu to pick Light, Dark or System default, or turn the theme or its font on and off. If you're updating, the button is added at the end of the toolbar once; you can move or remove it in Preferences → Toolbars & menus.
+* Lectrix's interface font, Google Sans Text, comes with both plugins and is calibre's interface font while the theme is on, in the main window and the book editor. A font you picked in Look & feel → Main interface stays. Untick **Use Lectrix's font** in the button's menu to keep calibre's font.
 
 ### UI/UX improvements
 

@@ -82,6 +82,9 @@ class LectrixThemesAction(InterfaceAction):
         self.use_theme_action = ac = menu.addAction('Use the Lectrix theme')
         ac.setCheckable(True)
         ac.toggled.connect(self.set_use_theme)
+        self.use_font_action = ac = menu.addAction("Use Lectrix's font")
+        ac.setCheckable(True)
+        ac.toggled.connect(self.set_use_font)
         menu.aboutToShow.connect(self.update_menu)
         self.qaction.setMenu(menu)
 
@@ -92,10 +95,11 @@ class LectrixThemesAction(InterfaceAction):
         current = self.palette_actions.get(gprefs['color_palette'])
         if current is not None:
             current.setChecked(True)
-        ac = self.use_theme_action
-        ac.blockSignals(True)
-        ac.setChecked(use_theme())
-        ac.blockSignals(False)
+        for ac, on in ((self.use_theme_action, use_theme()), (self.use_font_action, bool(prefs['use_font']))):
+            ac.blockSignals(True)
+            ac.setChecked(on)
+            ac.blockSignals(False)
+        self.use_font_action.setEnabled(use_theme())  # the font goes with the theme
 
     def toggle_mode(self):
         "Switch to dark if calibre shows light now, and to light if it shows dark."
@@ -107,4 +111,8 @@ class LectrixThemesAction(InterfaceAction):
     def set_use_theme(self, on):
         prefs['use_theme'] = bool(on)
         sync_palette()
+        restyle()
+
+    def set_use_font(self, on):
+        prefs['use_font'] = bool(on)
         restyle()

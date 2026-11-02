@@ -12,6 +12,7 @@ CURRENT = '__current__'  # the name calibre's Adjust colors saves its palettes u
 
 prefs = plugin_prefs(MAIN_PREFS)
 prefs.defaults['use_theme'] = True
+prefs.defaults['use_font'] = True
 prefs.defaults['applied_palette'] = None  # palette_version() last applied
 prefs.defaults['palette_backup'] = None  # {mode: the palette from before}
 

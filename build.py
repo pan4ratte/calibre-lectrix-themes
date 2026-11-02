@@ -46,6 +46,8 @@ def build_plugins():
                 zf.write(f, f'images/{f.name}')
             for name in SHARED:
                 zf.write(SRC / name, name)
+            for f in sorted((SRC / 'fonts').glob('*')):
+                zf.write(f, f'fonts/{f.name}')
             zf.writestr(f'plugin-import-name-{import_name}.txt', '')
         print('Wrote', out.relative_to(ROOT))
 

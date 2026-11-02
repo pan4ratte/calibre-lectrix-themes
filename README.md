@@ -4,8 +4,8 @@ Lectrix's light and dark themes for calibre. Lectrix's colors come from Neo's li
 
 The themes come as two plugins:
 
-- **Lectrix themes**: sets calibre's light and dark colors to Lectrix's, and styles what the colors alone can't reach in the main window and its dialogs. That means the title bar, fields, buttons, menus, tooltips, scrollbars, the toolbar's edge, the side panels' edges, the book list's column headers, the Tag browser's hover, the book list's current cell and the cards in Preferences.
-- **Lectrix themes for Edit book**: the same styling for the book editor, plus "Lectrix light" and "Lectrix dark" syntax themes.
+- **Lectrix themes**: sets calibre's light and dark colors to Lectrix's, and styles what the colors alone can't reach in the main window and its dialogs. That means the title bar, fields, buttons, menus, tooltips, scrollbars, the toolbar's edge, the side panels' edges, the book list's column headers, the Tag browser's hover, the book list's current cell and the cards in Preferences. It also brings Lectrix's interface font, Google Sans Text.
+- **Lectrix themes for Edit book**: the same styling and font for the book editor, plus "Lectrix light" and "Lectrix dark" syntax themes.
 
 Needs calibre 7 or newer. The title bar colors and the round corners of menus and dropdown lists need Windows 11.
 
@@ -21,12 +21,17 @@ Calibre's mode is set under **Adjust colors** → "Color palette": Light, Dark, 
 
 Lectrix themes sets the light and dark colors in Adjust colors to Lectrix's on its first start, and again only when an update changes them. Changes you make in Adjust colors in between are kept. All of calibre's windows read these colors, the e-book viewer and the editor included.
 
+### The font
+
+While the theme is on, calibre's interface font is Google Sans Text, Lectrix's font, at the size calibre had. The plugins carry it, so nothing is installed in Windows. It covers Latin, Greek and Cyrillic; other scripts are drawn in the system's fonts. If you've picked a font in Look & feel → Main interface → **Interface font**, yours stays; calibre's own default, Segoe UI, doesn't count as picked. To keep calibre's font, right-click **Lectrix themes** on the toolbar and untick **Use Lectrix's font**. The font doesn't reach book text or the e-book viewer.
+
 ### The toolbar button
 
 Click **Lectrix themes** on the toolbar to switch calibre between light and dark. Right-click it, or click its arrow, for the rest:
 
 - **Light**, **Dark** and **System default**, calibre's Color palette choices from Adjust colors;
-- **Use the Lectrix theme**, to turn the theme on and off.
+- **Use the Lectrix theme**, to turn the theme on and off;
+- **Use Lectrix's font**, to turn Google Sans Text on and off.
 
 ### Turning it off
 
@@ -34,6 +39,7 @@ Right-click **Lectrix themes** on the toolbar and untick **Use the Lectrix theme
 
 - the colors you had before come back, in both modes;
 - the title bar, field, button and menu styling goes;
+- calibre's own interface font comes back;
 - the book editor goes back to calibre's automatic syntax theme, the next time it starts.
 
 Calibre doesn't tell plugins when they're removed, so untick this before removing the plugin. If you already removed it, use Adjust colors → **Restore defaults**.
@@ -59,6 +65,7 @@ To go back to calibre's own icons, delete `resources/images` and restart.
 | Part | What it does |
 | --- | --- |
 | Colors | Window, lists, text, selection, links and tooltips, set in calibre's palette |
+| Font | Google Sans Text as the interface font, in the main window, its dialogs and the book editor, unless you picked your own |
 | Title bar | Matches the toolbar, with Lectrix's title color and a thin window edge. Covers the main window and every dialog. |
 | Fields | Thin edge, stronger under the pointer and in the accent when focused |
 | Dropdowns | As in Lectrix: one you can't type in looks like a button, and an open one has a 2 px accent edge. The list opens below, styled as a menu with round corners, with a faint tint under the pointer. |
@@ -109,3 +116,5 @@ All colors live in [src/lectrix_theme.py](src/lectrix_theme.py). `python build.p
 ## License
 
 GPL v3, like calibre itself. See [LICENSE](LICENSE).
+
+The plugins carry Google Sans Text 14.000 from the [official release](https://github.com/googlefonts/googlesans/releases/tag/v14.000), © 2025 The Google Sans Project Authors, under the SIL Open Font License 1.1: see [src/fonts/OFL.txt](src/fonts/OFL.txt). It is cut down to Latin, Greek and Cyrillic, without the Google logo ligatures, by [tools/subset_fonts.py](tools/subset_fonts.py). "Google" and "Google Sans" are trademarks of Google LLC; this project isn't affiliated with Google.

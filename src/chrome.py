@@ -11,6 +11,8 @@ from qt.core import (
     QColor,
     QEasingCurve,
     QEvent,
+    QFont,
+    QFontDatabase,
     QGraphicsEffect,
     QIcon,
     QImage,
@@ -87,6 +89,11 @@ def theme_enabled():
     'The main plugin\'s "Use the Lectrix theme" setting, read afresh: the editor runs as its own program.'
     prefs = plugin_prefs(MAIN_PREFS)
     return bool(prefs.get('use_theme', prefs.get('use_palette', True)))
+
+
+def font_enabled():
+    """The "Use Lectrix's font" setting of the main plugin's button, read afresh like theme_enabled()."""
+    return bool(plugin_prefs(MAIN_PREFS).get('use_font', True))
 
 
 def current_mode(app):
@@ -218,6 +225,7 @@ class Chrome(QObject):
         self.enabled = theme_enabled()
         mode = self.mode
         self.update_stylesheet(mode)
+        update_font(self.app, self.enabled and font_enabled())
         refresh_preference_tiles(self.app)
         for window in self.app.topLevelWindows():
             if window.isVisible():
@@ -724,6 +732,83 @@ def refresh_preference_tiles(app):
                 widget.update_button_widths()
             except Exception:
                 pass
+
+
+# Lectrix's interface font, in the plugin's zip (see tools/subset_fonts.py).
+FONT_FAMILY = 'Google Sans Text'
+FONT_FILES = tuple(f'fonts/GoogleSansText-{style}.ttf' for style in ('Regular', 'Italic', 'Bold', 'BoldItalic'))
+
+
+def load_font(app):
+    "Add the plugin's font to calibre's from its zip, once. Whether calibre has it."
+    loaded = getattr(app, 'lectrix_themes_font_loaded', None)
+    if loaded is not None:
+        return loaded
+    loaded = FONT_FAMILY in QFontDatabase.families()
+    read = globals().get('get_resources')  # calibre gives it to the modules of a plugin's zip
+    if not loaded and read is not None:
+        try:
+            for data in read(list(FONT_FILES)).values():
+                if data and QFontDatabase.addApplicationFontFromData(data) != -1:
+                    loaded = True
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+    app.lectrix_themes_font_loaded = loaded
+    return loaded
+
+
+def font_key(info):
+    "A font as calibre saves it, (family, size, weight, italic), made comparable."
+    family, size, weight, italic = info[:4]
+    return str(family), int(size), int(getattr(weight, 'value', weight)), bool(italic)
+
+
+def picked_font(app, gprefs):
+    """The interface font picked in Look & feel, or None. calibre's own default doesn't count:
+    it gets saved by pressing OK there without choosing anything."""
+    saved = gprefs['font']
+    if saved is None:
+        return None
+    ours = getattr(app, 'lectrix_themes_font', None)
+    default = ours[1] if ours is not None else getattr(app, 'original_font', None)
+    try:
+        if default is not None and font_key(saved) == font_key(default):
+            return None
+    except Exception:
+        pass
+    return saved
+
+
+def update_font(app, enabled):
+    '''Make Lectrix's font calibre's interface font while the theme is on, unless one was picked
+    in Look & feel, and calibre's default too, which Look & feel shows. Put back what was there
+    when the theme is turned off.'''
+    from calibre.gui2 import gprefs
+
+    ours = getattr(app, 'lectrix_themes_font', None)  # (the font before, calibre's default before)
+    wanted = enabled and picked_font(app, gprefs) is None and load_font(app)
+    if wanted and ours is None:
+        before = QFont(QApplication.font())
+        font = QFont(before)
+        font.setFamilies([FONT_FAMILY])
+        # Drawn as browsers draw it, Lectrix's among them: smoothed in grey and unhinted.
+        # ClearType's colored edges, made for Windows' own fonts, make its letters look off.
+        font.setStyleStrategy(QFont.StyleStrategy.NoSubpixelAntialias)
+        font.setHintingPreference(QFont.HintingPreference.PreferNoHinting)
+        original = getattr(app, 'original_font', None)
+        app.lectrix_themes_font = (before, original)
+        if original is not None:
+            app.original_font = (FONT_FAMILY,) + tuple(original[1:])
+        QApplication.setFont(font)
+    elif not wanted and ours is not None:
+        before, original = ours
+        app.lectrix_themes_font = None
+        if original is not None:
+            app.original_font = original
+        if QApplication.font().family() == FONT_FAMILY:
+            QApplication.setFont(before)
 
 
 def install():
