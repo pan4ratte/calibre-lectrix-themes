@@ -9,7 +9,7 @@ class LectrixThemes(InterfaceActionBase):
     )
     supported_platforms = ['windows', 'osx', 'linux']
     author = 'Mark'
-    version = (1, 1, 0)
+    version = (1, 2, 0)
     minimum_calibre_version = (7, 0, 0)
     actual_plugin = 'calibre_plugins.lectrix_themes.action:LectrixThemesAction'
 
