@@ -14,6 +14,8 @@ TOKENS = {
         'menu': '#e4e9f1',  # menus, tooltips
         'raised': '#f9fafb',  # cards
         'card_hover_line': '#6fa3ef',  # a card's edge under the pointer
+        'tab_active': '#f9fafb',  # the selected tab, a raised pill
+        'tab_active_line': '#ccd3dd',  # its ring, in the light theme only
         'button': '#f2f4f7',
         'button_hover': '#e4e9f1',
         'line': '#ccd3dd',
@@ -40,6 +42,8 @@ TOKENS = {
         'menu': '#1c1e22',
         'raised': '#1c1e22',
         'card_hover_line': '#6fa3ef',
+        'tab_active': '#2a2f37',
+        'tab_active_line': '#2a2f37',
         'button': '#262a31',
         'button_hover': '#2a2f37',
         'line': '#303540',
@@ -71,6 +75,7 @@ BLENDS = {
         'disabled': '#94979b',  # the text at 45% opacity on the chrome
         'button_disabled': '#f2f4f7',  # the button at 45% opacity on the chrome
         'accent_hover': '#294e8d',  # --lectrix-accent-hover: 80% accent, toward the strong text
+        'accent_disabled': '#9ab0d4',  # the accent at 45% opacity on the chrome
         'text_selection': '#b8c8e1',  # --lectrix-selection (accent at 32%) on the surface
         'emphasis': '#e4e9f1',  # a matching bracket, a non-breaking space in the editor
         'line_number': '#8a8c90',
@@ -87,6 +92,7 @@ BLENDS = {
         'disabled': '#565a61',
         'button_disabled': '#1c1e22',
         'accent_hover': '#86b0ee',
+        'accent_disabled': '#3c5478',
         'text_selection': '#2c3d56',
         'emphasis': '#2a2f37',
         'line_number': '#666a71',
@@ -168,8 +174,9 @@ def rgba(hex_color, alpha):
     return f'rgba({r}, {g}, {b}, {alpha})'
 
 
-# Arrows for dropdowns, number fields, sorted columns and scrollbars: Qt stylesheets need
-# image files, which chrome.py writes to calibre's cache folder.
+# Arrows for dropdowns, number fields, sorted columns and scrollbars, and the tick and dash
+# of checkboxes: Qt stylesheets need image files, which chrome.py writes to calibre's cache
+# folder.
 ARROWS = {
     'down': 'M3 6l5 5 5-5',
     'up': 'M3 10l5-5 5 5',
@@ -180,10 +187,14 @@ SCROLL_ARROWS = {
     'scroll-left': 'M5.25 0L0.75 3L5.25 6Z',
     'scroll-right': 'M0.75 0L5.25 3L0.75 6Z',
 }
+CHECKS = {
+    'check': 'M3.5 8.5l3 3 6-7',
+    'partial': 'M4 8h8',
+}
 
 
 def arrow_images(mode):
-    "Every arrow image of a mode, as {name: svg}, for names such as 'down' and 'up-disabled'."
+    "Every image of a mode, as {name: svg}, for names such as 'down', 'up-disabled' and 'check'."
     T, B = TOKENS[mode], BLENDS[mode]
     ans = {}
     for name, path in ARROWS.items():
@@ -197,6 +208,12 @@ def arrow_images(mode):
         ans[name] = (
             '<svg xmlns="http://www.w3.org/2000/svg" width="6" height="6" viewBox="0 0 6 6">'
             f'<path d="{path}" fill="{T["fg"]}" fill-opacity="{SCROLL_THUMB_ALPHA}"/></svg>'
+        )
+    for name, path in CHECKS.items():
+        ans[name] = (
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">'
+            f'<path d="{path}" fill="none" stroke="{T["accent_fg"]}" stroke-width="2" '
+            'stroke-linecap="round" stroke-linejoin="round"/></svg>'
         )
     return ans
 
@@ -371,6 +388,49 @@ QAbstractSpinBox::down-arrow:disabled, QAbstractSpinBox::down-arrow:off {{
     image: url({arrow('down-disabled')});
 }}
 
+/* Checkboxes, as Lectrix's: a box with round corners on the fields' color, edged in the muted
+   text color, a step stronger under the pointer, filled with the accent and ticked when on.
+   Checkable rows in lists and checkable groups have the same box. */
+QCheckBox {{
+    spacing: 6px;
+}}
+QCheckBox::indicator, QGroupBox::indicator, QAbstractItemView::indicator {{
+    width: 14px;
+    height: 14px;
+    background-color: {T['surface']};
+    border: 1px solid {T['fg_muted']};
+    border-radius: 4px;
+}}
+QCheckBox::indicator:hover, QGroupBox::indicator:hover, QAbstractItemView::indicator:hover {{
+    border-color: {T['fg']};
+}}
+QCheckBox::indicator:checked, QGroupBox::indicator:checked, QAbstractItemView::indicator:checked {{
+    background-color: {T['accent']};
+    border-color: {T['accent']};
+    image: url({arrow('check')});
+}}
+QCheckBox::indicator:indeterminate, QAbstractItemView::indicator:indeterminate {{
+    background-color: {T['accent']};
+    border-color: {T['accent']};
+    image: url({arrow('partial')});
+}}
+QCheckBox::indicator:checked:hover, QGroupBox::indicator:checked:hover,
+QAbstractItemView::indicator:checked:hover, QCheckBox::indicator:indeterminate:hover,
+QAbstractItemView::indicator:indeterminate:hover {{
+    background-color: {B['accent_hover']};
+    border-color: {B['accent_hover']};
+}}
+QCheckBox::indicator:disabled, QGroupBox::indicator:disabled, QAbstractItemView::indicator:disabled {{
+    background-color: transparent;
+    border-color: {B['disabled']};
+}}
+QCheckBox::indicator:checked:disabled, QGroupBox::indicator:checked:disabled,
+QAbstractItemView::indicator:checked:disabled, QCheckBox::indicator:indeterminate:disabled,
+QAbstractItemView::indicator:indeterminate:disabled {{
+    background-color: {B['accent_disabled']};
+    border-color: {B['accent_disabled']};
+}}
+
 /* Buttons: flat, with the same thin edge. The default button of a dialog takes the accent,
    as Lectrix's primary buttons do. */
 QPushButton {{
@@ -539,9 +599,43 @@ QHeaderView::down-arrow {{
     image: url({arrow('down')});
 }}
 
-/* The selected tab: outlined in Lectrix's line color rather than calibre's grey. */
+/* Tabs, as Lectrix's: pills, the selected one raised (ringed with a line in the light theme),
+   the others plain until hovered. The page under them is the window's color in a thin
+   edge, rather than the grey Qt lightens from the buttons' color. Look & feel in
+   Preferences is such a page, with its tabs hidden. */
+QTabWidget::pane {{
+    background-color: {T['chrome']};
+    border: 1px solid {T['line']};
+    border-radius: 8px;
+}}
+QTabWidget::tab-bar {{
+    left: 4px;
+}}
+QTabBar::tab {{
+    background-color: transparent;
+    color: {T['fg_muted']};
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 12px;
+    margin: 2px;
+}}
+QTabBar::tab:top {{
+    margin-bottom: 4px;
+}}
+QTabBar::tab:bottom {{
+    margin-top: 4px;
+}}
+QTabBar::tab:hover {{
+    background-color: {B['hover_chrome']};
+    color: {T['fg']};
+}}
 QTabBar::tab:selected {{
-    border-color: {T['line_strong']};
+    background-color: {T['tab_active']};
+    color: {T['fg_strong']};
+    border-color: {T['tab_active_line']};
+}}
+QTabBar::tab:disabled {{
+    color: {B['disabled']};
 }}
 
 /* calibre's Preferences: each page a card, as the tools on Lectrix's start screen. chrome.py

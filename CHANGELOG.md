@@ -1,6 +1,13 @@
 # Changelog
 
 
+## 1.3.0
+
+### UI/UX improvements
+
+* Tabs look like Lectrix's: pills, the selected one raised, ringed with a thin line in light mode, the others plain until hovered. The page under the tabs is the window's color in a thin, rounded edge instead of a light grey, and so is the page beside the list in Preferences → Look & feel.
+* Checkboxes look like Lectrix's: a box with round corners, edged in the muted text color, filled with the accent and ticked when on. Lists with checkboxes and groups that can be switched off have the same box.
+
 ## 1.2.0
 
 ### New features
