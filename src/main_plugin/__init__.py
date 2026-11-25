@@ -28,3 +28,22 @@ class LectrixThemes(InterfaceActionBase):
 
         sync_palette()
         restyle()
+
+
+def install_splash():
+    "Put the Lectrix splash in place of calibre's, before the main window starts: see splash.py."
+    import sys
+
+    if 'calibre.gui2.main' not in sys.modules:
+        return  # not the main window: the viewer, the command-line programs and the rest
+    try:
+        from .splash import patch_splash
+
+        patch_splash()
+    except Exception:
+        import traceback
+
+        traceback.print_exc()
+
+
+install_splash()

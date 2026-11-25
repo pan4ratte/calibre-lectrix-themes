@@ -3,6 +3,10 @@
 
 ## 1.3.0
 
+### New features
+
+* Calibre starts with a Lectrix splash screen in place of its own: a card with round corners in the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use. **Show splash screen at startup** in Look & feel → Main interface turns it off, as before.
+
 ### UI/UX improvements
 
 * Tabs look like Lectrix's: pills, the selected one raised, ringed with a thin line in light mode, the others plain until hovered. The page under the tabs is the window's color in a thin, rounded edge instead of a light grey, and so is the page beside the list in Preferences → Look & feel.

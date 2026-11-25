@@ -741,6 +741,27 @@ def shadow_profile(length, start, end, sigma, samples):
     return ans
 
 
+# The startup splash: a card on its own in the middle of the screen, with corners as round as
+# the Preferences cards' and a softer, wider shadow than theirs, as it floats over the desktop.
+SPLASH_RADIUS = 12
+SPLASH_SHADOWS = {
+    'light': (0, 12, 40, 0, (15, 37, 88, 0.18)),
+    'dark': (0, 12, 40, 0, (0, 0, 0, 0.6)),
+}
+
+
+def splash(mode):
+    "The startup splash's colors, and its shadow as a CSS box-shadow."
+    T = TOKENS[mode]
+    return {
+        'card': T['raised'],
+        'edge': T['line'],
+        'title': T['fg_strong'],
+        'text': T['fg_muted'],
+        'shadow': SPLASH_SHADOWS[mode],
+    }
+
+
 def hover_text(mode):
     "The Tag browser's hovered text."
     return TOKENS[mode]['fg_strong']

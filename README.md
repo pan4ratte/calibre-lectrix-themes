@@ -25,6 +25,10 @@ Lectrix themes sets the light and dark colors in Adjust colors to Lectrix's on i
 
 While the theme is on, calibre's interface font is Google Sans Text, Lectrix's font, at the size calibre had. The plugins carry it, so nothing is installed in Windows. It covers Latin, Greek and Cyrillic; other scripts are drawn in the system's fonts. If you've picked a font in Look & feel → Main interface → **Interface font**, yours stays; calibre's own default, Segoe UI, doesn't count as picked. To keep calibre's font, right-click **Lectrix themes** on the toolbar and untick **Use Lectrix's font**. The font doesn't reach book text or the e-book viewer.
 
+### The splash screen
+
+While the theme is on, calibre starts with a Lectrix splash in place of its own: a card with round corners in the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use, such as Calibre Modern GNOME. Look & feel → Main interface → **Show splash screen at startup** turns it off, as it does calibre's.
+
 ### The toolbar button
 
 Click **Lectrix themes** on the toolbar to switch calibre between light and dark. Right-click it, or click its arrow, for the rest:
@@ -40,6 +44,7 @@ Right-click **Lectrix themes** on the toolbar and untick **Use the Lectrix theme
 - the colors you had before come back, in both modes;
 - the title bar, field, button and menu styling goes;
 - calibre's own interface font comes back;
+- calibre's own splash screen comes back, at the next start;
 - the book editor goes back to calibre's automatic syntax theme, the next time it starts.
 
 Calibre doesn't tell plugins when they're removed, so untick this before removing the plugin. If you already removed it, use Adjust colors → **Restore defaults**.
@@ -65,6 +70,7 @@ To go back to calibre's own icons, delete `resources/images` and restart.
 | Part | What it does |
 | --- | --- |
 | Colors | Window, lists, text, selection, links and tooltips, set in calibre's palette |
+| Splash screen | A Lectrix card in place of calibre's startup splash: round corners, the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use. See [The splash screen](#the-splash-screen). |
 | Font | Google Sans Text as the interface font, in the main window, its dialogs and the book editor, unless you picked your own |
 | Title bar | Matches the toolbar, with Lectrix's title color and a thin window edge. Covers the main window and every dialog. |
 | Fields | Thin edge, stronger under the pointer and in the accent when focused |
