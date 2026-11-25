@@ -6,6 +6,7 @@
 ### New features
 
 * Calibre starts with a Lectrix splash screen in place of its own: a card with round corners in the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use. **Show splash screen at startup** in Look & feel → Main interface turns it off, as before.
+* calibre's icon is the calibre icon of the icon theme you use: on its windows and dialogs, in Alt+Tab and the tray, and on your calibre shortcuts on the taskbar, the desktop and your Start menu. Turning the theme off puts calibre's icon back everywhere.
 
 ### UI/UX improvements
 

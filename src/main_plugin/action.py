@@ -30,6 +30,23 @@ def add_button_once():
         gprefs[f'action-layout-{bar}'] = tuple(gprefs[f'action-layout-{bar}']) + (NAME,)
 
 
+def update_shortcuts_later():
+    "Point calibre's shortcuts at the right icon, once calibre is idle: see app_icon.py."
+    from qt.core import QTimer
+
+    def update():
+        try:
+            from .app_icon import update_shortcuts
+
+            update_shortcuts()
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+
+    QTimer.singleShot(1000, update)
+
+
 def set_color_palette(name):
     "Set calibre's Color palette, as Adjust colors does."
     from calibre.gui2 import gprefs
@@ -62,8 +79,31 @@ class LectrixThemesAction(InterfaceAction):
 
             traceback.print_exc()
         self.qaction.setIcon(get_icons('images/icon.png', NAME))  # noqa: F821, calibre provides get_icons
+        try:
+            from qt.core import QApplication
+
+            from .app_icon import refresh
+
+            refresh(self.gui)
+            QApplication.instance().palette_changed.connect(lambda: refresh(self.gui))
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+        update_shortcuts_later()
         self.qaction.triggered.connect(self.toggle_mode)
         self.build_menu()
+
+    def initialization_complete(self):
+        # calibre makes its tray icon after genesis().
+        try:
+            from .app_icon import refresh
+
+            refresh(self.gui)
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
 
     def build_menu(self):
         "The menu shown on right-click, or by the button's arrow."
@@ -112,6 +152,7 @@ class LectrixThemesAction(InterfaceAction):
         prefs['use_theme'] = bool(on)
         sync_palette()
         restyle()
+        update_shortcuts_later()
 
     def set_use_font(self, on):
         prefs['use_font'] = bool(on)

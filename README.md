@@ -29,6 +29,12 @@ While the theme is on, calibre's interface font is Google Sans Text, Lectrix's f
 
 While the theme is on, calibre starts with a Lectrix splash in place of its own: a card with round corners in the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use, such as Calibre Modern GNOME. Look & feel → Main interface → **Show splash screen at startup** turns it off, as it does calibre's.
 
+### The app icon
+
+While the theme is on, calibre's icon is the calibre icon of the icon theme you use, in place of calibre's own: on the main window and its dialogs, in Alt+Tab, in the tray, and on calibre's shortcuts on your taskbar, your desktop and your own Start menu. For the shortcuts, the plugin saves the icon as `calibre.ico` in calibre's settings folder, under `plugins/lectrix_themes`, and points them at it. Windows may take a moment, or a sign-out, to show the new icon on a pinned taskbar button.
+
+Some places keep calibre's icon: the Start menu entry calibre's installer makes, which only an administrator can change, `calibre.exe` itself, and the e-book viewer, where calibre doesn't load plugins.
+
 ### The toolbar button
 
 Click **Lectrix themes** on the toolbar to switch calibre between light and dark. Right-click it, or click its arrow, for the rest:
@@ -45,9 +51,10 @@ Right-click **Lectrix themes** on the toolbar and untick **Use the Lectrix theme
 - the title bar, field, button and menu styling goes;
 - calibre's own interface font comes back;
 - calibre's own splash screen comes back, at the next start;
+- calibre's own icon comes back, on its windows and its shortcuts;
 - the book editor goes back to calibre's automatic syntax theme, the next time it starts.
 
-Calibre doesn't tell plugins when they're removed, so untick this before removing the plugin. If you already removed it, use Adjust colors → **Restore defaults**.
+Calibre doesn't tell plugins when they're removed, so untick this before removing the plugin. If you already removed it, use Adjust colors → **Restore defaults**, and set your calibre shortcuts' icons back in their Properties → **Change Icon**.
 
 ### Colors only, without the plugins
 
@@ -70,6 +77,7 @@ To go back to calibre's own icons, delete `resources/images` and restart.
 | Part | What it does |
 | --- | --- |
 | Colors | Window, lists, text, selection, links and tooltips, set in calibre's palette |
+| App icon | The calibre icon of the icon theme you use, on calibre's windows, in the tray and on your calibre shortcuts. See [The app icon](#the-app-icon). |
 | Splash screen | A Lectrix card in place of calibre's startup splash: round corners, the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use. See [The splash screen](#the-splash-screen). |
 | Font | Google Sans Text as the interface font, in the main window, its dialogs and the book editor, unless you picked your own |
 | Title bar | Matches the toolbar, with Lectrix's title color and a thin window edge. Covers the main window and every dialog. |

@@ -28,22 +28,33 @@ class LectrixThemes(InterfaceActionBase):
 
         sync_palette()
         restyle()
+        from calibre_plugins.lectrix_themes.action import update_shortcuts_later
+
+        update_shortcuts_later()
 
 
-def install_splash():
-    "Put the Lectrix splash in place of calibre's, before the main window starts: see splash.py."
+def install_startup():
+    """Before the main window starts: put the Lectrix splash in place of calibre's (see
+    splash.py), and give the app the theme's icon, which the main window takes (see app_icon.py)."""
     import sys
 
     if 'calibre.gui2.main' not in sys.modules:
         return  # not the main window: the viewer, the command-line programs and the rest
     try:
+        from qt.core import QApplication
+
+        from .app_icon import use_theme_icon
+        from .palette import use_theme
         from .splash import patch_splash
 
         patch_splash()
+        app = QApplication.instance()
+        if app is not None and use_theme():
+            use_theme_icon(app, True)
     except Exception:
         import traceback
 
         traceback.print_exc()
 
 
-install_splash()
+install_startup()
