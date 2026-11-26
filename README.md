@@ -1,6 +1,10 @@
-# Lectrix themes for Calibre
+<div align="center">
+  <img src="images/logo.svg" width="128" height="128" alt="Lectrix themes logo">
+  <h1>Lectrix themes for calibre</h1>
+  <p>Lectrix's light and dark themes for calibre<br>Official pair of the <a href="https://github.com/pan4ratte/calibre-modern-gnome">Calibre Modern GNOME</a> icon theme</p>
+</div>
 
-Lectrix's light and dark themes for calibre. Lectrix's colors come from Neo's light and Midnight themes for Obsidian, tinted toward Lectrix blue. Calibre uses the theme that matches its mode, and switches when the mode changes.
+Lectrix's colors come from Neo's light and Midnight themes for Obsidian, tinted toward Lectrix blue. Calibre uses the theme that matches its mode, and switches when the mode changes.
 
 <p align="center">
   <img src="screenshots/main-light.png" width="49%" alt="calibre's main window in Lectrix light">
@@ -30,7 +34,14 @@ Edit metadata:
   <img src="screenshots/metadata-dark.png" width="49%" alt="Edit metadata in Lectrix dark">
 </p>
 
-The screenshots use the [Calibre Modern GNOME](#pairs-well-with-calibre-modern-gnome) icons.
+The splash screen:
+
+<p align="center">
+  <img src="screenshots/splash-light.jpg" width="49%" alt="The Lectrix splash screen in light mode">
+  <img src="screenshots/splash-dark.jpg" width="49%" alt="The Lectrix splash screen in dark mode">
+</p>
+
+The screenshots use the [Calibre Modern GNOME](#official-icon-theme-calibre-modern-gnome) icons.
 
 ## Install
 
@@ -52,11 +63,6 @@ While the theme is on, calibre's interface font is Google Sans Text, Lectrix's f
 
 While the theme is on, calibre starts with a Lectrix splash in place of its own: a card with round corners in the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use, such as Calibre Modern GNOME. Look & feel → Main interface → **Show splash screen at startup** turns it off, as it does calibre's.
 
-<p align="center">
-  <img src="screenshots/splash-light.jpg" width="49%" alt="The Lectrix splash screen in light mode">
-  <img src="screenshots/splash-dark.jpg" width="49%" alt="The Lectrix splash screen in dark mode">
-</p>
-
 ### The app icon
 
 While the theme is on, calibre's icon is the calibre icon of the icon theme you use, in place of calibre's own: on the main window and its dialogs, in Alt+Tab, in the tray, and on calibre's shortcuts on your taskbar, your desktop and your own Start menu. For the shortcuts, the plugin saves the icon as `calibre.ico` in calibre's settings folder, under `plugins/lectrix_themes`, and points them at it. Windows may take a moment, or a sign-out, to show the new icon on a pinned taskbar button.
@@ -70,6 +76,10 @@ Click **Lectrix themes** on the toolbar to switch calibre between light and dark
 - **Light**, **Dark** and **System default**, calibre's Color palette choices from Adjust colors;
 - **Use the Lectrix theme**, to turn the theme on and off;
 - **Use Lectrix's font**, to turn Google Sans Text on and off.
+
+### The book editor
+
+The editor plugin selects the Lectrix syntax theme on its first start, and swaps between the light and dark one as calibre's mode changes. If you pick another theme in the editor's Preferences → Editor settings, that one stays. The plugin rewrites the two Lectrix themes at each start, so changes to them are lost. To make your own version, create a new theme based on one of them under another name.
 
 ### Turning it off
 
@@ -88,9 +98,9 @@ Calibre doesn't tell plugins when they're removed, so untick this before removin
 
 `lectrix.calibre-palette`, also in the release, holds the same light and dark colors for calibre's own palette import. Click **Adjust colors**, then **Import**, and choose the file. You get Lectrix's colors without the title bar, field and menu styling.
 
-## Pairs well with Calibre Modern GNOME
+## Official icon theme: Calibre Modern GNOME
 
-[Calibre Modern GNOME](https://github.com/pan4ratte/calibre-modern-gnome) is a separate icon theme by the same author. It uses clean, modern icons based on Ubuntu's Yaru-Blue style and suits the themes' flat look. It's a separate project, so each works without the other.
+[Calibre Modern GNOME](https://github.com/pan4ratte/calibre-modern-gnome) is the official icon theme for Lectrix themes, by the same author. Its clean, modern icons, based on Ubuntu's Yaru-Blue style, suit the themes' flat look. It's a separate project, so each works without the other.
 
 The theme is in alpha testing and has no release package yet. Until it does, install it with calibre's own way of replacing icons:
 
@@ -99,59 +109,6 @@ The theme is in alpha testing and has no release package yet. Until it does, ins
 3. Restart calibre.
 
 To go back to calibre's own icons, delete `resources/images` and restart.
-
-## What each part covers
-
-| Part | What it does |
-| --- | --- |
-| Colors | Window, lists, text, selection, links and tooltips, set in calibre's palette |
-| App icon | The calibre icon of the icon theme you use, on calibre's windows, in the tray and on your calibre shortcuts. See [The app icon](#the-app-icon). |
-| Splash screen | A Lectrix card in place of calibre's startup splash: round corners, the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use. See [The splash screen](#the-splash-screen). |
-| Font | Google Sans Text as the interface font, in the main window, its dialogs and the book editor, unless you picked your own |
-| Title bar | Matches the toolbar, with Lectrix's title color and a thin window edge. Covers the main window and every dialog. |
-| Fields | Thin edge, stronger under the pointer and in the accent when focused |
-| Dropdowns | As in Lectrix: one you can't type in looks like a button, and an open one has a 2 px accent edge. The list opens below, styled as a menu with round corners, with a faint tint under the pointer. |
-| Buttons | Flat, with the same edge. A dialog's default button (usually OK) takes the accent. |
-| Checkboxes | As in Lectrix: a box with round corners, edged in the muted text color, filled with the accent and ticked when on. The same in lists with checkboxes and in groups that can be switched off. |
-| Menus and tooltips | Lectrix's menu color with a thin edge and round corners on menus, separators in the line color, and a faint hover rather than the selection color. Tooltips are Lectrix's without the tail: round corners, 12 px text, no shadow, and long text wrapping at 320 px. |
-| Toolbar | The toolbar's lower edge in Lectrix's line color |
-| Tabs | Lectrix's pills: the selected tab raised, ringed with a thin line in light mode, the others plain until hovered. The page under the tabs, and the page beside the list in Look & feel, is the window's color in a thin, rounded edge instead of Qt's light grey. |
-| Side panels | The Tag browser and Book details end in a thin line where they meet the book list, as Lectrix's side panes do, in the accent under the pointer. Calibre's own handles are bars with dots. |
-| Scrollbars | Thin, as in Lectrix: no track, a rounded thumb in the text color that gets stronger under the pointer, and a small arrow at each end |
-| Preferences | Each page is a card on a grid, its name beside the icon, as the tools on Lectrix's start screen: a thin edge, round corners and Lectrix's soft shadow. As in Lectrix, a card rises smoothly under the pointer, with a deeper shadow and its edge fading to blue, and sinks back a little when pressed, with a ripple running out from where it was clicked. The lines between categories go. |
-| Column headers | The book list's and other lists' headers: muted text over a thin line, faint lines between columns, and Lectrix arrows for the sort order |
-| Tag browser | A faint hover, and Lucide's chevrons beside the categories. Calibre's own hover in dark mode is brighter than the selection, with black text and arrows. |
-| Book list's current cell | Looks like the rest of the selected row. Calibre's own style draws it lighter, with black text in dark mode. |
-| Book editor | Title bar, fields, buttons, checkboxes, menus, scrollbars and column headers as above, plus the Lectrix syntax themes |
-| E-book viewer | Its default "System" color scheme already uses the palette for pages, text and links |
-
-The editor plugin selects the Lectrix syntax theme on its first start, and swaps between the light and dark one as calibre's mode changes. If you pick another theme in the editor's Preferences → Editor settings, that one stays. The plugin rewrites the two Lectrix themes at each start, so changes to them are lost. To make your own version, create a new theme based on one of them under another name.
-
-### Not covered
-
-- **The e-book viewer's title bar.** Calibre doesn't load plugins in the viewer.
-- **Buttons calibre styles itself.** Calibre gives some controls their own styling, for example the cover buttons in the metadata editor, and those keep calibre's look.
-- **Tight editable dropdowns.** An editable dropdown squeezed down to the width of its text cuts off a sliver of its first letter. Qt gives styled dropdowns no room for the text box's inner margin. It doesn't happen in calibre's stretched fields, such as the search bar.
-
-## How the palette maps
-
-Calibre's 16 palette colors each take a Lectrix design token from `src/app.css`:
-
-| Calibre role | Used for | Lectrix token | Light | Dark |
-| --- | --- | --- | --- | --- |
-| Window | Main window, toolbars, panes | `--lectrix-chrome` | `#f2f4f7` | `#131416` |
-| Base | Book list, text fields | `--lectrix-surface` | `#f9fafb` | `#0c0d0e` |
-| AlternateBase | Alternate rows | `--lectrix-chrome` | `#f2f4f7` | `#131416` |
-| Button | Buttons | `--lectrix-button` | `#f2f4f7` | `#262a31` |
-| ToolTipBase | Tooltips | `--lectrix-menu` | `#e4e9f1` | `#1c1e22` |
-| Highlight | Selected rows | `--lectrix-row-selected` on chrome | `#d3dceb` | `#222b39` |
-| Accent | Checkboxes, progress, focus | `--lectrix-accent` | `#2f5daa` | `#6fa3ef` |
-| WindowText, Text, ButtonText, ToolTipText | Text | `--lectrix-fg` | `#22252a` | `#a9b0bc` |
-| HighlightedText, BrightText | Text on a selection, emphasis | `--lectrix-fg-strong` | `#121417` | `#e1e5ea` |
-| PlaceholderText | Field hints | `--lectrix-fg-muted` | `#505762` | `#929baa` |
-| Any text, disabled | Unavailable controls | `--lectrix-fg` at 45% on chrome | `#94979b` | `#565a61` |
-| Link | Links | `--lectrix-accent` | `#2f5daa` | `#6fa3ef` |
-| LinkVisited | Visited links | `--lectrix-source-5` (Neo purple) | `#6f55f1` | `#9580ff` |
 
 ## Building
 
