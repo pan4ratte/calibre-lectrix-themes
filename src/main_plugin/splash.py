@@ -31,9 +31,9 @@ MESSAGE_GAP = 20  # from the name's baseline to the message's capitals
 CREDIT = 'Theme by Mark Ingrem'
 CREDIT_SIZE = 11  # px
 CREDIT_GAP = 12  # from the message's baseline to the author's capitals
-PADDING = 48  # at least, above and below it all, and the most the text may use of the sides
+PADDING = 48  # at least, above and below it all, and beside the message
 SIDE_PADDING = 56  # at least, beside the icon and the name
-MIN_SIZE = 360  # the card's side
+MIN_SIZE = 360  # the card's side, made larger when the name or calibre's messages need it
 # The icon's colors weigh more on the light card than the dark one: in light mode the icon and
 # the name are left heavy by 3 px, in dark mode even. They go right by half of that.
 OPTICAL_SHIFT = 1.5  # px
@@ -78,9 +78,11 @@ def round_up(value, step=8):
 
 
 class LectrixSplash(QSplashScreen):
-    "Takes the place of calibre's SplashScreen: calibre calls show_message() and finish() on it."
+    """Takes the place of calibre's SplashScreen: calibre calls show_message() and finish() on it.
+    messages are the ones calibre will show, so the card is made wide enough for them in any
+    language."""
 
-    def __init__(self, mode):
+    def __init__(self, mode, messages=()):
         self.drawn_once = False
         self.colors = splash(mode)
         self.icon = QIcon.ic('lt.png')  # calibre's icon, from the icon theme in use
@@ -103,7 +105,8 @@ class LectrixSplash(QSplashScreen):
         text, credit = QFontMetricsF(self.text_font), QFontMetricsF(self.credit_font)
         to_message = self.icon_height + MESSAGE_GAP + text.capHeight()  # from the icon's top to the message's baseline
         group = to_message + CREDIT_GAP + credit.capHeight()  # and to the author's
-        size = max(MIN_SIZE, round_up(self.lockup_width + 2 * SIDE_PADDING), round_up(group + 2 * PADDING))
+        widest = max((text.horizontalAdvance(m.strip()) for m in messages), default=0)
+        size = max(MIN_SIZE, round_up(self.lockup_width + 2 * SIDE_PADDING), round_up(group + 2 * PADDING), round_up(widest + 2 * PADDING))
         self.card_width = self.card_height = size
         self.group_top = max(PADDING, (size - group) / 2)
         self.message_baseline = self.group_top + to_message
@@ -200,9 +203,12 @@ def patch_splash():
             from calibre.constants import __appname__
             from calibre.utils.localization import _
 
-            self.splash_screen = LectrixSplash(current_mode(app))
+            # calibre's two messages, the second shown by GuiRunner.start_gui()
+            loading = _('Starting %s: Loading books...') % __appname__
+            messages = (loading, _('Initializing user interface...'))
+            self.splash_screen = LectrixSplash(current_mode(app), messages)
             self.splash_screen.show()
-            self.splash_screen.show_message(_('Starting %s: Loading books...') % __appname__)
+            self.splash_screen.show_message(loading)
         except Exception:
             import traceback
 
