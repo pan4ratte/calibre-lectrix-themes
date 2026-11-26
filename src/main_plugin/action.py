@@ -95,11 +95,14 @@ class LectrixThemesAction(InterfaceAction):
         self.build_menu()
 
     def initialization_complete(self):
-        # calibre makes its tray icon after genesis().
+        # calibre makes its tray icon and the Tag browser after genesis().
         try:
             from .app_icon import refresh
 
             refresh(self.gui)
+            chrome = install()
+            if chrome is not None:
+                chrome.attach_tree_hover()
         except Exception:
             import traceback
 

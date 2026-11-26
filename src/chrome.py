@@ -9,6 +9,7 @@ from qt.core import (
     QAbstractScrollArea,
     QApplication,
     QColor,
+    QCursor,
     QEasingCurve,
     QEvent,
     QFont,
@@ -28,6 +29,7 @@ from qt.core import (
     QRect,
     QRectF,
     QSize,
+    QStyleOptionViewItem,
     Qt,
     QToolButton,
     QTransform,
@@ -56,8 +58,11 @@ from .lectrix_theme import (
     popup_edge,
     shadow_extent,
     shadow_profile,
+    TREE_HOVER_RADIUS,
+    TREE_INDENTATION,
     stylesheet,
     title_bar,
+    tree_hover,
     tree_hover_stylesheet,
 )
 
@@ -122,8 +127,8 @@ def update_current_item_highlight(view, enabled):
             view.viewport().update()
 
 
-def write_arrows(mode):
-    "Write a mode's arrow images to calibre's cache folder, and give the stylesheet using them."
+def arrow_files(mode):
+    "Write a mode's arrow images to calibre's cache folder, as needed, and give their paths by name."
     import os
 
     from calibre.constants import cache_dir
@@ -142,7 +147,12 @@ def write_arrows(mode):
             with open(dest, 'w', encoding='utf-8') as f:
                 f.write(svg)
         paths[key] = dest.replace(os.sep, '/')
-    return stylesheet(mode, paths.__getitem__)
+    return paths
+
+
+def write_arrows(mode):
+    "Write a mode's arrow images to calibre's cache folder, and give the stylesheet using them."
+    return stylesheet(mode, arrow_files(mode).__getitem__)
 
 
 # DwmSetWindowAttribute attributes (Windows 11; the colors are ignored on Windows 10).
@@ -236,6 +246,22 @@ class Chrome(QObject):
                 views.append(top)
             for view in views:
                 update_current_item_highlight(view, self.enabled)
+        self.attach_tree_hover()
+
+    def attach_tree_hover(self):
+        '''Give each Tag browser Lectrix's hover, once, and its indentation while the theme is
+        on. The hover shows only while the theme is on.'''
+        for top in self.app.topLevelWidgets():
+            for view in top.findChildren(QAbstractItemView):
+                if view.metaObject().className() != 'TagsView':
+                    continue
+                if not hasattr(view, 'lectrix_themes_hover'):
+                    view.lectrix_themes_hover = TreeHover(view, self)
+                if self.mode:
+                    if view.indentation() != TREE_INDENTATION:
+                        view.setIndentation(TREE_INDENTATION)
+                else:
+                    view.resetIndentation()
 
     def update_stylesheet(self, mode):
         # calibre sets its stylesheet afresh on every palette change, then emits
@@ -278,6 +304,78 @@ class Chrome(QObject):
         self.styled[hwnd] = mode
 
 
+def drawn_aligned(index):
+    '''Whether a Tag browser row is drawn one place to the left, over the chevron's place it
+    leaves empty: a tag inside a category, or a group, with nothing inside it. Its icon then
+    lines up under its parent's.'''
+    return index.parent().isValid() and not index.model().hasChildren(index)
+
+
+class TreeHover(QObject):
+    '''The Tag browser's hover, painted under the rows as one rounded shape over a category's
+    chevron and its name, or over a tag drawn in the chevron's place. A stylesheet's hover covers the name alone, and Qt draws the
+    chevron's place apart from it. Nothing is painted while the theme is off.'''
+
+    def __init__(self, view, chrome):
+        super().__init__(view)
+        self.view, self.chrome = view, chrome
+        self.last = None  # the row painted as hovered: (top, height)
+        view.viewport().installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        t = event.type()
+        try:
+            if t == QEvent.Type.Paint:
+                self.paint()
+            elif t in (QEvent.Type.MouseMove, QEvent.Type.HoverMove, QEvent.Type.Leave, QEvent.Type.HoverLeave):
+                self.track()
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+        return False
+
+    def hovered(self):
+        'The hover shape, in the viewport, or None.'
+        view = self.view
+        viewport = view.viewport()
+        if not self.chrome.mode or not viewport.underMouse():
+            return None
+        index = view.indexAt(viewport.mapFromGlobal(QCursor.pos()))
+        if not index.isValid():
+            return None
+        r = view.visualRect(index)
+        if r.isEmpty():
+            return None
+        if view.model().hasChildren(index) or drawn_aligned(index):
+            r.setLeft(max(0, r.left() - view.indentation()))
+        return r
+
+    def track(self):
+        # Qt repaints only the name of the row the pointer leaves: repaint the whole row, so
+        # the chevron's place doesn't keep the hover.
+        r = self.hovered()
+        now = None if r is None else (r.top(), r.height())
+        if now != self.last:
+            viewport = self.view.viewport()
+            for row in (self.last, now):
+                if row is not None:
+                    viewport.update(QRect(0, row[0], viewport.width(), row[1]))
+            self.last = now
+
+    def paint(self):
+        r = self.hovered()
+        self.last = None if r is None else (r.top(), r.height())
+        if r is None:
+            return
+        p = QPainter(self.view.viewport())
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor(tree_hover(self.chrome.mode)))
+        p.drawRoundedRect(QRectF(r), TREE_HOVER_RADIUS, TREE_HOVER_RADIUS)
+        p.end()
+
+
 def patch_tree_hover(chrome):
     # calibre's hover in tree views is the selection color lightened: in dark mode brighter
     # than the selection itself, with the Tag browser's text in black on it. Lectrix's hover
@@ -292,7 +390,16 @@ def patch_tree_hover(chrome):
 
     def tree_view_hover_style(self):
         mode = chrome.mode
-        return tree_hover_stylesheet(mode) if mode else original(self)
+        if not mode:
+            return original(self)
+        try:
+            arrow = arrow_files(mode).__getitem__
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+            return original(self)
+        return tree_hover_stylesheet(mode, arrow)
 
     tree_view_hover_style.lectrix_themes = True
     PaletteManager.tree_view_hover_style = tree_view_hover_style
@@ -310,6 +417,36 @@ def patch_tree_hover(chrome):
             return original_color(self, hover, palette)
 
         delegate.text_color = text_color
+
+        # A tag with nothing inside it has no chevron: draw it over the chevron's empty place,
+        # so its icon lines up under its category's. Clicks there reach it already, as Qt
+        # gives a row's whole width to its item.
+        # The box for renaming it opens there too.
+        def aligned(self, option, index):
+            if chrome.mode:
+                try:
+                    if drawn_aligned(index):
+                        option = QStyleOptionViewItem(option)
+                        r = QRect(option.rect)
+                        r.setLeft(r.left() - self.tags_view.indentation())
+                        option.rect = r
+                except Exception:
+                    import traceback
+
+                    traceback.print_exc()
+            return option
+
+        original_paint = delegate.paint
+        original_geometry = delegate.updateEditorGeometry
+
+        def paint(self, painter, option, index):
+            return original_paint(self, painter, aligned(self, option, index), index)
+
+        def updateEditorGeometry(self, editor, option, index):
+            return original_geometry(self, editor, aligned(self, option, index), index)
+
+        delegate.paint = paint
+        delegate.updateEditorGeometry = updateEditorGeometry
     return True
 
 

@@ -191,6 +191,12 @@ CHECKS = {
     'check': 'M3.5 8.5l3 3 6-7',
     'partial': 'M4 8h8',
 }
+# The Tag browser's chevrons: Lucide's chevron-right and chevron-down, on its 24 px grid.
+CHEVRONS = {
+    'chevron-right': 'm9 18 6-6-6-6',
+    'chevron-down': 'm6 9 6 6 6-6',
+}
+CHEVRON_WIDTH = 10
 
 
 def arrow_images(mode):
@@ -213,6 +219,14 @@ def arrow_images(mode):
         ans[name] = (
             '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">'
             f'<path d="{path}" fill="none" stroke="{T["accent_fg"]}" stroke-width="2" '
+            'stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        )
+    for name, path in CHEVRONS.items():
+        # At Lectrix's 16 px, cut down to the 10 px the chevrons take up, so nothing empty
+        # sits between a chevron and its category.
+        ans[name] = (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{CHEVRON_WIDTH}" height="16" viewBox="5 0 15 24">'
+            f'<path d="{path}" fill="none" stroke="{T["fg_muted"]}" stroke-width="2" '
             'stroke-linecap="round" stroke-linejoin="round"/></svg>'
         )
     return ans
@@ -772,13 +786,36 @@ def hover_text(mode):
     return TOKENS[mode]['fg_strong']
 
 
-def tree_hover_stylesheet(mode):
-    "The Tag browser's hover (it sits on the chrome), in place of calibre's."
+TREE_HOVER_RADIUS = 6
+# The Tag browser's indentation, the width of a chevron's place: the chevron, 5 px on its
+# left and 1 px on its right. calibre's style makes it 12 px, which shrinks the chevron and
+# puts it at the edge.
+TREE_INDENTATION = 16
+CHEVRON_PADDING_LEFT = 5
+
+
+def tree_hover(mode):
+    "The Tag browser's hover: a faint tint of the chrome it sits on."
+    return BLENDS[mode]['hover_chrome']
+
+
+def tree_hover_stylesheet(mode, arrow):
+    """The Tag browser's chevrons, in place of calibre's arrows, and no hover of calibre's:
+    chrome.py paints it, as a stylesheet's leaves out the chevron. The chevron is stretched to
+    its place, so padding keeps it at its size. arrow gives the path of an image from
+    arrow_images()."""
     return f'''
     QTreeView::item:hover {{
-        background: {BLENDS[mode]['hover_chrome']};
-        border: 0px;
-        border-radius: 6px;
+        border: 1px solid transparent;
+    }}
+    QTreeView::branch {{
+        padding: 0 {TREE_INDENTATION - CHEVRON_WIDTH - CHEVRON_PADDING_LEFT}px 0 {CHEVRON_PADDING_LEFT}px;
+    }}
+    QTreeView::branch:has-children:closed {{
+        image: url({arrow('chevron-right')});
+    }}
+    QTreeView::branch:has-children:open {{
+        image: url({arrow('chevron-down')});
     }}
 '''
 
