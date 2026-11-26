@@ -2,12 +2,35 @@
 
 Lectrix's light and dark themes for calibre. Lectrix's colors come from Neo's light and Midnight themes for Obsidian, tinted toward Lectrix blue. Calibre uses the theme that matches its mode, and switches when the mode changes.
 
+<p align="center">
+  <img src="screenshots/main-light.png" width="49%" alt="calibre's main window in Lectrix light">
+  <img src="screenshots/main-dark.png" width="49%" alt="calibre's main window in Lectrix dark">
+</p>
+
 The themes come as two plugins:
 
 - **Lectrix themes**: sets calibre's light and dark colors to Lectrix's, and styles what the colors alone can't reach in the main window and its dialogs. That means the title bar, fields, buttons, checkboxes, menus, tooltips, scrollbars, tabs, the toolbar's edge, the side panels' edges, the book list's column headers, the Tag browser's hover and chevrons, the book list's current cell and the cards in Preferences. It also brings Lectrix's interface font, Google Sans Text.
 - **Lectrix themes for Edit book**: the same styling and font for the book editor, plus "Lectrix light" and "Lectrix dark" syntax themes.
 
 Needs calibre 7 or newer. The title bar colors and the round corners of menus and dropdown lists need Windows 11.
+
+## Screenshots
+
+Preferences:
+
+<p align="center">
+  <img src="screenshots/preferences-light.png" width="49%" alt="Preferences in Lectrix light">
+  <img src="screenshots/preferences-dark.png" width="49%" alt="Preferences in Lectrix dark">
+</p>
+
+Edit metadata:
+
+<p align="center">
+  <img src="screenshots/metadata-light.png" width="49%" alt="Edit metadata in Lectrix light">
+  <img src="screenshots/metadata-dark.png" width="49%" alt="Edit metadata in Lectrix dark">
+</p>
+
+The screenshots use the [Calibre Modern GNOME](#pairs-well-with-calibre-modern-gnome) icons.
 
 ## Install
 
@@ -28,6 +51,11 @@ While the theme is on, calibre's interface font is Google Sans Text, Lectrix's f
 ### The splash screen
 
 While the theme is on, calibre starts with a Lectrix splash in place of its own: a card with round corners in the mode's colors and font, a soft shadow, and calibre's icon from the icon theme you use, such as Calibre Modern GNOME. Look & feel → Main interface → **Show splash screen at startup** turns it off, as it does calibre's.
+
+<p align="center">
+  <img src="screenshots/splash-light.jpg" width="49%" alt="The Lectrix splash screen in light mode">
+  <img src="screenshots/splash-dark.jpg" width="49%" alt="The Lectrix splash screen in dark mode">
+</p>
 
 ### The app icon
 
