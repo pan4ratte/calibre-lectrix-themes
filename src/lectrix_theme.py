@@ -678,6 +678,11 @@ QMenu::item:disabled {{
     color: {B['disabled']};
     background-color: transparent;
 }}
+/* Qt places an item's icon and check mark at the item's edge, ignoring its padding: move them
+   in so they sit as far from the edge as from the item's top and bottom. */
+QMenu::icon, QMenu::indicator {{
+    left: 6px;
+}}
 QMenu::separator {{
     height: 1px;
     background-color: {T['line']};
