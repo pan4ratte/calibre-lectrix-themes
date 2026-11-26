@@ -85,7 +85,7 @@ To go back to calibre's own icons, delete `resources/images` and restart.
 | Dropdowns | As in Lectrix: one you can't type in looks like a button, and an open one has a 2 px accent edge. The list opens below, styled as a menu with round corners, with a faint tint under the pointer. |
 | Buttons | Flat, with the same edge. A dialog's default button (usually OK) takes the accent. |
 | Checkboxes | As in Lectrix: a box with round corners, edged in the muted text color, filled with the accent and ticked when on. The same in lists with checkboxes and in groups that can be switched off. |
-| Menus and tooltips | Lectrix's menu color with a thin edge and round corners on menus, separators in the line color, and a faint hover rather than the selection color |
+| Menus and tooltips | Lectrix's menu color with a thin edge and round corners on menus, separators in the line color, and a faint hover rather than the selection color. Tooltips are Lectrix's without the tail: round corners, 12 px text, no shadow, and long text wrapping at 320 px. |
 | Toolbar | The toolbar's lower edge in Lectrix's line color |
 | Tabs | Lectrix's pills: the selected tab raised, ringed with a thin line in light mode, the others plain until hovered. The page under the tabs, and the page beside the list in Look & feel, is the window's color in a thin, rounded edge instead of Qt's light grey. |
 | Side panels | The Tag browser and Book details end in a thin line where they meet the book list, as Lectrix's side panes do, in the accent under the pointer. Calibre's own handles are bars with dots. |

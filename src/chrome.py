@@ -58,6 +58,7 @@ from .lectrix_theme import (
     popup_edge,
     shadow_extent,
     shadow_profile,
+    TOOLTIP_MAX_WIDTH,
     TREE_HOVER_RADIUS,
     TREE_INDENTATION,
     stylesheet,
@@ -205,6 +206,28 @@ def is_rounded_popup(widget):
     return isinstance(widget, QMenu) or widget.metaObject().className() == 'QComboBoxPrivateContainer'
 
 
+def style_tooltip(tip, polishing):
+    '''Fit a tooltip to the stylesheet's box. A tooltip is made afresh each time it shows, and
+    polished before its window exists: its window can still be made see-through then, so the
+    stylesheet's round corners show, and without the shadow Lectrix's tooltips don't have.
+    As it shows, the margin Qt adds on top of the stylesheet's padding goes, and the
+    tooltip takes the size of the stylesheet's box alone. Long text wraps at Lectrix's
+    width, rather than at the narrow one Qt picks.'''
+    if polishing:
+        tip.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        tip.setWindowFlag(Qt.WindowType.NoDropShadowWindowHint, True)
+        return
+    tip.setMargin(0)
+    tip.setIndent(0)
+    if not tip.wordWrap():
+        tip.resize(tip.sizeHint())
+        return
+    tip.setWordWrap(False)
+    width = min(tip.sizeHint().width(), TOOLTIP_MAX_WIDTH)
+    tip.setWordWrap(True)
+    tip.resize(width, tip.heightForWidth(width))
+
+
 class Chrome(QObject):
     def __init__(self, app):
         super().__init__(app)
@@ -215,15 +238,21 @@ class Chrome(QObject):
         app.palette_changed.connect(self.refresh)
         app.focusWindowChanged.connect(self.on_focus_window)
         app.focusChanged.connect(self.on_focus_widget)
-        if sys.platform == 'win32':
-            app.installEventFilter(self)  # popups are rounded as they show
+        app.installEventFilter(self)  # popups are rounded as they show, tooltips as they're made
 
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.Type.Show and obj.isWidgetType() and is_rounded_popup(obj):
+        t = event.type()
+        if t == QEvent.Type.Show and sys.platform == 'win32' and obj.isWidgetType() and is_rounded_popup(obj):
             try:
                 style_popup(int(obj.winId()), self.mode)
             except Exception:
                 pass
+        elif t in (QEvent.Type.Polish, QEvent.Type.Show) and obj.isWidgetType() and obj.metaObject().className() == 'QTipLabel':
+            if self.mode:
+                try:
+                    style_tooltip(obj, t == QEvent.Type.Polish)
+                except Exception:
+                    pass
         return False
 
     @property

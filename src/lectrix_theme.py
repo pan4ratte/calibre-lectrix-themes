@@ -702,11 +702,16 @@ QMenu::separator {{
     background-color: {T['line']};
     margin: 4px 6px;
 }}
+/* Tooltips as Lectrix's, without the tail: flat, in the menus' color with their thin edge,
+   round corners, 12 px text and no shadow. chrome.py makes the window around them see-through,
+   so the corners show what is under them. */
 QToolTip {{
     background-color: {T['menu']};
     color: {T['fg']};
     border: 1px solid {T['line_strong']};
-    padding: 3px 6px;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
 }}
 '''
 
@@ -787,6 +792,8 @@ def hover_text(mode):
 
 
 TREE_HOVER_RADIUS = 6
+# The widest a tooltip grows before its text wraps, as in Lectrix.
+TOOLTIP_MAX_WIDTH = 320
 # The Tag browser's indentation, the width of a chevron's place: the chevron, 5 px on its
 # left and 1 px on its right. calibre's style makes it 12 px, which shrinks the chevron and
 # puts it at the edge.
